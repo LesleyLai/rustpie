@@ -1,0 +1,13 @@
+COMMENT = _{ "#|" ~ (!"|#" ~ ANY)* ~ "|#" | ";;" ~ ANY* ~ NEWLINE }
+WHITESPACE = _{ (" " | NEWLINE ) }
+
+ident = @{ nondigit ~ (nondigit | ASCII_DIGIT)* }
+    nondigit = { LETTER | MATH_SYMBOL | DASH_PUNCTUATION }
+
+atom = @{ "'" ~ ident }
+
+sexpr = { "(" ~ expr* ~ ")" }
+
+expr = { atom | sexpr }
+
+pie = { SOI ~ expr* ~ EOI }

@@ -1,3 +1,10 @@
+mod parser;
+mod ast;
+
+extern crate pest;
+#[macro_use]
+extern crate pest_derive;
+
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
@@ -19,7 +26,7 @@ fn repl() {
                 if line.starts_with("(exit)") {
                     break;
                 }
-                println!("Line: {}", line);
+                parser::print_result(&parser::parse(&line));
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");
