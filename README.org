@@ -1,0 +1,7 @@
+* README
+
+*Rustpie* is a Rust implementation of the [[https://docs.racket-lang.org/pie/][Pie]],
+a [[https://en.wikipedia.org/wiki/Dependent_type][dependently typed]] language with a Lisp-like syntax.
+The language is formally specified in the book /[[http://thelittletyper.com/][The Little Typer]]/.
+
+Rustpie is currently in very early development.
