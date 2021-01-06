@@ -1,12 +1,28 @@
 use crate::ast::{Expr};
-
+use crate::interpreter::TypeError::CannotResolveType;
 
 pub fn is_a(expr: &Expr, typ: &Expr) -> bool {
+    has_type(expr).map_or(false, |t| t == *typ)
+}
+
+pub enum TypeError {
+    CannotResolveType
+}
+
+impl std::fmt::Display for TypeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            TypeError::CannotResolveType => write!(f, "Cannot resolve the type")
+        }
+    }
+}
+
+pub fn has_type(expr: &Expr) -> Result<Expr, TypeError> {
     match expr {
-        Expr::Atom(_) => *typ == Expr::TAtom,
+        Expr::Var(_) => Err(TypeError::CannotResolveType),
+        Expr::TAtom => unimplemented!(),
+        Expr::Atom(_) => Ok(Expr::TAtom),
         Expr::App(_) => unimplemented!(),
-        Expr::Var(_) => false,
-        Expr::TAtom => false
     }
 }
 

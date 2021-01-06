@@ -2,10 +2,10 @@ pub type ExprList = Vec<Box<Expr>>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
-    Atom(String),
     Var(String),
-    App(ExprList),
     TAtom,
+    Atom(String),
+    App(ExprList),
 }
 
 
