@@ -27,7 +27,17 @@ fn repl() {
                 if line.starts_with("(exit)") {
                     break;
                 }
-                parser::print_result(&parser::parse(&line));
+                let ast = parser::parse(&line);
+                match ast {
+                    Err(e) => println!("{}", e.msg),
+                    Ok(ast) => {
+                        ast.last().map(
+                            |expr| match interpreter::has_type(expr) {
+                                Err(type_error) => println!("{}", type_error),
+                                Ok(typ) => println!("{}: {}", expr, typ)
+                            });
+                    }
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");

@@ -9,7 +9,7 @@ pub struct PieParser;
 
 
 pub struct ParseError {
-    msg: String
+    pub msg: String
 }
 
 pub type ParseResult<T> = std::result::Result<T, ParseError>;
@@ -85,8 +85,8 @@ mod tests {
 
     #[test]
     fn parsing_test() {
-        assert_eq!(parse_and_to_string("'x"), "(atom x)");
+        assert_eq!(parse_and_to_string("'x"), "'x");
         assert!(parse("'").is_err());
-        assert_eq!(parse_and_to_string("x"), "(var x)");
+        assert_eq!(parse_and_to_string("x"), "x");
     }
 }
