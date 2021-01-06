@@ -48,6 +48,7 @@ fn expr_read(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
             let exprs = exprs_read(parsed)?;
             Ok(Box::new(Expr::App(exprs)))
         }
+        Rule::ident => Ok(Box::new(Expr::Var(parsed.as_str().to_string()))),
         Rule::atom => Ok(Box::new(Expr::Atom(parsed.as_str()[1..].to_string()))),
         _ => unreachable!()
     }
@@ -58,9 +59,34 @@ pub fn parse(source: &str) -> ParseResult<Vec<Box<Expr>>> {
     pie_read(parsed)
 }
 
+pub fn result_to_string(result: &ParseResult<Vec<Box<Expr>>>) -> String {
+    match result {
+        Ok(exprs) => format!("{}", expr_list_to_string(&exprs)),
+        Err(ParseError { msg }) => format!("Parse Error:\n{}", msg)
+    }
+}
+
 pub fn print_result(result: &ParseResult<Vec<Box<Expr>>>) {
     match result {
-        Ok(exprs) => println!("{}", expr_list_to_string(&exprs)),
-        Err(ParseError { msg }) => eprintln!("Parse Error:\n{}", msg)
+        Ok(_) => println!("{}", result_to_string(result)),
+        Err(_) => eprintln!("{}", result_to_string(result))
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use crate::parser::result_to_string;
+    use crate::parser::parse;
+
+    fn parse_and_to_string(source: &str) -> String {
+        result_to_string(&parse(source))
+    }
+
+    #[test]
+    fn parsing_test() {
+        assert_eq!(parse_and_to_string("'x"), "(atom x)");
+        assert!(parse("'").is_err());
+        assert_eq!(parse_and_to_string("x"), "(var x)");
     }
 }

@@ -8,6 +8,6 @@ atom = @{ "'" ~ ident }
 
 sexpr = { "(" ~ expr* ~ ")" }
 
-expr = { atom | sexpr }
+expr = { atom | ident | sexpr }
 
 pie = { SOI ~ expr* ~ EOI }

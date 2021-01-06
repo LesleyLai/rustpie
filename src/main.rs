@@ -1,5 +1,6 @@
 mod parser;
 mod ast;
+mod interpreter;
 
 extern crate pest;
 #[macro_use]
