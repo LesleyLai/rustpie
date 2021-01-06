@@ -1,15 +1,16 @@
-use crate::ast::{Expr, Type};
+use crate::ast::{Expr};
 
 
-pub fn is_a(expr: &Expr, typ: &Type) -> bool {
+pub fn is_a(expr: &Expr, typ: &Expr) -> bool {
     match expr {
-        Expr::Atom(_) => *typ == Type::Atom,
+        Expr::Atom(_) => *typ == Expr::TAtom,
         Expr::App(_) => unimplemented!(),
-        Expr::Var(_) => false
+        Expr::Var(_) => false,
+        Expr::TAtom => false
     }
 }
 
-pub fn is_the_same_as(expr1: &Expr, expr2: &Expr, typ: &Type) -> bool
+pub fn is_the_same_as(expr1: &Expr, expr2: &Expr, typ: &Expr) -> bool
 {
     is_a(expr1, typ) && is_a(expr2, typ) && expr1 == expr2
 }
@@ -17,9 +18,9 @@ pub fn is_the_same_as(expr1: &Expr, expr2: &Expr, typ: &Type) -> bool
 #[cfg(test)]
 mod tests {
     use crate::parser::parse;
-    use crate::ast::{Type, Expr};
+    use crate::ast::{Expr};
     use crate::interpreter::{is_a, is_the_same_as};
-    use std::ops::Deref;
+    use std::borrow::Borrow;
 
     fn parse_to_expr(source: &str) -> Box<Expr>
     {
@@ -36,26 +37,26 @@ mod tests {
         }
     }
 
-    fn source_is_a(source: &str, typ: &Type) -> bool
+    fn source_is_a(source: &str, typ: &Expr) -> bool
     {
-        is_a(parse_to_expr(source).deref(), typ)
+        is_a(parse_to_expr(source).borrow(), typ)
     }
 
-    fn source_is_the_same_as(source1: &str, source2: &str, typ: &Type) -> bool
+    fn source_is_the_same_as(source1: &str, source2: &str, typ: &Expr) -> bool
     {
-        is_the_same_as(parse_to_expr(source1).deref(), parse_to_expr(source2).deref(), typ)
+        is_the_same_as(parse_to_expr(source1).borrow(), parse_to_expr(source2).borrow(), typ)
     }
 
 
     #[test]
     fn atom_test() {
-        assert!(source_is_a("'atom", &Type::Atom));
-        assert!(source_is_a("'ratatouille", &Type::Atom));
-        assert!(source_is_a("'obviously-an-atom", &Type::Atom));
-        assert!(source_is_a("'---", &Type::Atom));
-        assert!(!source_is_a("---", &Type::Atom));
+        assert!(source_is_a("'atom", &Expr::TAtom));
+        assert!(source_is_a("'ratatouille", &Expr::TAtom));
+        assert!(source_is_a("'obviously-an-atom", &Expr::TAtom));
+        assert!(source_is_a("'---", &Expr::TAtom));
+        assert!(!source_is_a("---", &Expr::TAtom));
 
-        assert!(source_is_the_same_as("'citron", "'citron", &Type::Atom));
-        assert!(!source_is_the_same_as("'pomme", "'orange", &Type::Atom));
+        assert!(source_is_the_same_as("'citron", "'citron", &Expr::TAtom));
+        assert!(!source_is_the_same_as("'pomme", "'orange", &Expr::TAtom));
     }
 }

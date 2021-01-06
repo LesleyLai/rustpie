@@ -1,15 +1,11 @@
 pub type ExprList = Vec<Box<Expr>>;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum Type {
-    Atom
-}
-
-#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Atom(String),
     Var(String),
     App(ExprList),
+    TAtom,
 }
 
 
@@ -19,6 +15,7 @@ impl std::fmt::Display for Expr {
             Expr::Atom(ident) => write!(f, "(atom {})", ident),
             Expr::Var(ident) => write!(f, "(var {})", ident),
             Expr::App(list) => write!(f, "(apply {})", expr_list_to_string(list)),
+            Expr::TAtom => write!(f, "Atom")
         }
     }
 }
