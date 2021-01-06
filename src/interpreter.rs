@@ -5,15 +5,20 @@ pub fn is_a(expr: &Expr, typ: &Type) -> bool {
     match expr {
         Expr::Atom(_) => *typ == Type::Atom,
         Expr::App(_) => unimplemented!(),
-        Expr::Var(_) => false,
+        Expr::Var(_) => false
     }
+}
+
+pub fn is_the_same_as(expr1: &Expr, expr2: &Expr, typ: &Type) -> bool
+{
+    is_a(expr1, typ) && is_a(expr2, typ) && expr1 == expr2
 }
 
 #[cfg(test)]
 mod tests {
     use crate::parser::parse;
     use crate::ast::{Type, Expr};
-    use crate::interpreter::is_a;
+    use crate::interpreter::{is_a, is_the_same_as};
     use std::ops::Deref;
 
     fn parse_to_expr(source: &str) -> Box<Expr>
@@ -31,22 +36,26 @@ mod tests {
         }
     }
 
-    fn check_is_a(source: &str, typ: &Type)
+    fn source_is_a(source: &str, typ: &Type) -> bool
     {
-        assert!(is_a(parse_to_expr(source).deref(), typ))
+        is_a(parse_to_expr(source).deref(), typ)
     }
 
-    fn check_is_not_a(source: &str, typ: &Type)
+    fn source_is_the_same_as(source1: &str, source2: &str, typ: &Type) -> bool
     {
-        assert!(!is_a(parse_to_expr(source).deref(), typ))
+        is_the_same_as(parse_to_expr(source1).deref(), parse_to_expr(source2).deref(), typ)
     }
+
 
     #[test]
-    fn is_a_test() {
-        check_is_a("'atom", &Type::Atom);
-        check_is_a("'ratatouille", &Type::Atom);
-        check_is_a("'obviously-an-atom", &Type::Atom);
-        check_is_a("'---", &Type::Atom);
-        check_is_not_a("---", &Type::Atom);
+    fn atom_test() {
+        assert!(source_is_a("'atom", &Type::Atom));
+        assert!(source_is_a("'ratatouille", &Type::Atom));
+        assert!(source_is_a("'obviously-an-atom", &Type::Atom));
+        assert!(source_is_a("'---", &Type::Atom));
+        assert!(!source_is_a("---", &Type::Atom));
+
+        assert!(source_is_the_same_as("'citron", "'citron", &Type::Atom));
+        assert!(!source_is_the_same_as("'pomme", "'orange", &Type::Atom));
     }
 }
