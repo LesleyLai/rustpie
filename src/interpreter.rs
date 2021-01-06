@@ -11,7 +11,8 @@ pub enum TypeError {
 impl std::fmt::Display for TypeError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            TypeError::CannotResolveType(e) => write!(f, "Cannot resolve the type of {}", e)
+            TypeError::CannotResolveType(e) =>
+                write!(f, "Cannot resolve the type of expression {}", e)
         }
     }
 }

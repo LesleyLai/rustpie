@@ -9,7 +9,13 @@ pub struct PieParser;
 
 
 pub struct ParseError {
-    pub msg: String
+    msg: String
+}
+
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Parse Error:\n{}", self.msg)
+    }
 }
 
 pub type ParseResult<T> = std::result::Result<T, ParseError>;
@@ -65,14 +71,6 @@ pub fn result_to_string(result: &ParseResult<Vec<Box<Expr>>>) -> String {
         Err(ParseError { msg }) => format!("Parse Error:\n{}", msg)
     }
 }
-
-pub fn print_result(result: &ParseResult<Vec<Box<Expr>>>) {
-    match result {
-        Ok(_) => println!("{}", result_to_string(result)),
-        Err(_) => eprintln!("{}", result_to_string(result))
-    }
-}
-
 
 #[cfg(test)]
 mod tests {

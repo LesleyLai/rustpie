@@ -29,11 +29,11 @@ fn repl() {
                 }
                 let ast = parser::parse(&line);
                 match ast {
-                    Err(e) => println!("{}", e.msg),
+                    Err(e) => eprintln!("{}", e),
                     Ok(ast) => {
                         ast.last().map(
                             |expr| match interpreter::has_type(expr) {
-                                Err(type_error) => println!("{}", type_error),
+                                Err(type_error) => eprintln!("{}", type_error),
                                 Ok(typ) => println!("{}: {}", expr, typ)
                             });
                     }
