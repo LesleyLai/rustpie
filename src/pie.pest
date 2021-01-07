@@ -6,8 +6,12 @@ ident = @{ nondigit ~ (nondigit | ASCII_DIGIT)* }
 
 atom = @{ "'" ~ ident }
 
-sexpr = { "(" ~ expr* ~ ")" }
+cons = { "(" ~ "cons" ~ expr ~ expr ~ ")" }
 
-expr = { atom | ident | sexpr }
+pair = { "(" ~ "Pair" ~ expr ~ expr ~ ")" }
+
+sexpr = { "(" ~ expr ~ expr* ~ ")" }
+
+expr = { cons | pair | atom | ident | sexpr }
 
 pie = { SOI ~ expr* ~ EOI }

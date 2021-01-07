@@ -22,11 +22,17 @@ pub fn has_type(expr: &Expr) -> Result<Expr, TypeError> {
         Expr::Var(_) => Err(TypeError::CannotResolveType(format!("{}", expr))),
         Expr::TAtom => unimplemented!(),
         Expr::Atom(_) => Ok(Expr::TAtom),
-        Expr::App(_) => unimplemented!(),
+        Expr::App(_, _) => unimplemented!(),
+        Expr::TPair(_e1, _e2) => unimplemented!(),
+        Expr::Cons(e1, e2) => {
+            let t1 = has_type(e1)?;
+            let t2 = has_type(e2)?;
+            Ok(Expr::TPair(Box::new(t1), Box::new(t2)))
+        }
     }
 }
 
-pub fn is_the_same_as(expr1: &Expr, expr2: &Expr, typ: &Expr) -> bool
+pub fn is_the_same_as(expr1: &Expr, typ: &Expr, expr2: &Expr) -> bool
 {
     is_a(expr1, typ) && is_a(expr2, typ) && expr1 == expr2
 }
@@ -53,26 +59,34 @@ mod tests {
         }
     }
 
-    fn source_is_a(source: &str, typ: &Expr) -> bool
+    fn source_is_a(expr: &str, typ: &str) -> bool
     {
-        is_a(parse_to_expr(source).borrow(), typ)
+        is_a(parse_to_expr(expr).borrow(),
+             parse_to_expr(typ).borrow())
     }
 
-    fn source_is_the_same_as(source1: &str, source2: &str, typ: &Expr) -> bool
+    fn source_is_the_same_as(e1: &str, typ: &str, e2: &str) -> bool
     {
-        is_the_same_as(parse_to_expr(source1).borrow(), parse_to_expr(source2).borrow(), typ)
+        is_the_same_as(parse_to_expr(e1).borrow(),
+                       parse_to_expr(typ).borrow(),
+                       parse_to_expr(e2).borrow())
     }
 
 
     #[test]
     fn atom_test() {
-        assert!(source_is_a("'atom", &Expr::TAtom));
-        assert!(source_is_a("'ratatouille", &Expr::TAtom));
-        assert!(source_is_a("'obviously-an-atom", &Expr::TAtom));
-        assert!(source_is_a("'---", &Expr::TAtom));
-        assert!(!source_is_a("---", &Expr::TAtom));
+        assert!(source_is_a("'atom", "Atom"));
+        assert!(source_is_a("'ratatouille", "Atom"));
+        assert!(source_is_a("'obviously-an-atom", "Atom"));
+        assert!(source_is_a("'---", "Atom"));
+        assert!(!source_is_a("---", "Atom"));
 
-        assert!(source_is_the_same_as("'citron", "'citron", &Expr::TAtom));
-        assert!(!source_is_the_same_as("'pomme", "'orange", &Expr::TAtom));
+        assert!(source_is_the_same_as("'citron", "Atom", "'citron"));
+        assert!(!source_is_the_same_as("'pomme", "Atom", "'orange"));
+    }
+
+    #[test]
+    fn pair_test() {
+        assert!(source_is_a("(cons 'x 'y)", "(Pair Atom Atom)"));
     }
 }

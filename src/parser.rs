@@ -33,28 +33,50 @@ fn is_eoi(parsed: &pest::iterators::Pair<Rule>) -> bool {
     parsed.as_rule() == Rule::EOI
 }
 
-fn pie_read(parsed: pest::iterators::Pair<Rule>) -> ParseResult<ExprList> {
+fn read_pie(parsed: pest::iterators::Pair<Rule>) -> ParseResult<ExprList> {
     match parsed.as_rule() {
         Rule::pie => {
-            exprs_read(parsed)
+            read_exprs(parsed.into_inner())
         }
         _ => unreachable!(),
     }
 }
 
-fn exprs_read(parsed: pest::iterators::Pair<Rule>) -> ParseResult<ExprList> {
-    parsed.into_inner().filter(|child| !is_eoi(child)).map(expr_read).collect()
+fn read_exprs(parsed: pest::iterators::Pairs<Rule>) -> ParseResult<ExprList> {
+    parsed.filter(|child| !is_eoi(child)).map(read_expr).collect()
 }
 
+fn read_binary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(Box<Expr>, Box<Expr>)> {
+    let mut inner_rule = parsed.into_inner();
+    let first = read_expr(inner_rule.next().unwrap())?;
+    let second = read_expr(inner_rule.next().unwrap())?;
+    assert!(inner_rule.next().is_none());
+    Ok((first, second))
+}
 
-fn expr_read(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
+fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
     match parsed.as_rule() {
-        Rule::expr => expr_read(parsed.into_inner().next().unwrap()),
-        Rule::sexpr => {
-            let exprs = exprs_read(parsed)?;
-            Ok(Box::new(Expr::App(exprs)))
+        Rule::expr => read_expr(parsed.into_inner().next().unwrap()),
+        Rule::cons => {
+            let (first, second) = read_binary(parsed)?;
+            Ok(Box::new(Expr::Cons(first, second)))
         }
-        Rule::ident => Ok(Box::new(Expr::Var(parsed.as_str().to_string()))),
+        Rule::pair => {
+            let (first, second) = read_binary(parsed)?;
+            Ok(Box::new(Expr::TPair(first, second)))
+        }
+        Rule::sexpr => {
+            let mut inner_rule = parsed.into_inner();
+            let first = read_expr(inner_rule.next().unwrap())?;
+            Ok(Box::new(Expr::App(first, read_exprs(inner_rule)?)))
+        }
+        Rule::ident => {
+            let ident = parsed.as_str().to_string();
+            match ident.as_str() {
+                "Atom" => Ok(Box::new(Expr::TAtom)),
+                _ => Ok(Box::new(Expr::Var(ident)))
+            }
+        }
         Rule::atom => Ok(Box::new(Expr::Atom(parsed.as_str()[1..].to_string()))),
         _ => unreachable!()
     }
@@ -62,7 +84,7 @@ fn expr_read(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
 
 pub fn parse(source: &str) -> ParseResult<Vec<Box<Expr>>> {
     let parsed = PieParser::parse(Rule::pie, source)?.next().unwrap();
-    pie_read(parsed)
+    read_pie(parsed)
 }
 
 pub fn result_to_string(result: &ParseResult<Vec<Box<Expr>>>) -> String {
@@ -85,6 +107,9 @@ mod tests {
     fn parsing_test() {
         assert_eq!(parse_and_to_string("'x"), "'x");
         assert!(parse("'").is_err());
+        assert_eq!(parse_and_to_string("Atom"), "Atom");
         assert_eq!(parse_and_to_string("x"), "x");
+        assert_eq!(parse_and_to_string("(cons 'x 'x)"), "(cons 'x 'x)");
+        assert_eq!(parse_and_to_string("(Pair Atom Atom)"), "(Pair Atom Atom)");
     }
 }

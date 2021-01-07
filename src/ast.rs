@@ -5,7 +5,9 @@ pub enum Expr {
     Var(String),
     TAtom,
     Atom(String),
-    App(ExprList),
+    TPair(Box<Expr>, Box<Expr>),
+    Cons(Box<Expr>, Box<Expr>),
+    App(Box<Expr>, ExprList),
 }
 
 
@@ -14,8 +16,10 @@ impl std::fmt::Display for Expr {
         match self {
             Expr::Atom(ident) => write!(f, "'{}", ident),
             Expr::Var(ident) => write!(f, "{}", ident),
-            Expr::App(list) => write!(f, "({})", expr_list_to_string(list)),
-            Expr::TAtom => write!(f, "Atom")
+            Expr::App(func, args) => write!(f, "({} {})", *func, expr_list_to_string(args)),
+            Expr::TAtom => write!(f, "Atom"),
+            Expr::TPair(t1, t2) => write!(f, "(Pair {} {})", t1, t2),
+            Expr::Cons(e1, e2) => write!(f, "(cons {} {})", e1, e2)
         }
     }
 }
