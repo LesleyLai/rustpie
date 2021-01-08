@@ -1,6 +1,6 @@
-mod parser;
 mod ast;
 mod interpreter;
+mod parser;
 
 extern crate pest;
 #[macro_use]
@@ -8,6 +8,9 @@ extern crate pest_derive;
 
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
+
+use crate::interpreter::eval;
+use crate::interpreter::has_type;
 
 const RUSTPIE_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -31,11 +34,21 @@ fn repl() {
                 match ast {
                     Err(e) => eprintln!("{}", e),
                     Ok(ast) => {
-                        ast.last().map(
-                            |expr| match interpreter::has_type(expr) {
-                                Err(type_error) => eprintln!("{}", type_error),
-                                Ok(typ) => println!("{}: {}", expr, typ)
-                            });
+                        for (e, t) in ast.iter().map(|e| (e, has_type(&*e))) {
+                            match t {
+                                Err(type_error) => {
+                                    eprintln!("{}", type_error);
+                                    break;
+                                }
+                                Ok(typ) => match eval(e) {
+                                    Err(runtime_error) => {
+                                        eprintln!("{}", runtime_error);
+                                        break;
+                                    }
+                                    Ok(val) => println!("{}: {}", val, typ),
+                                },
+                            }
+                        }
                     }
                 }
             }
