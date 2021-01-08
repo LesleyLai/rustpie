@@ -55,10 +55,14 @@ pub fn is_the_same_as(expr1: &Expr, typ: &Expr, expr2: &Expr) -> bool {
     is_a(expr1, typ) && is_a(expr2, typ) && expr1 == expr2
 }
 
+pub fn is_the_same_type(typ1: &Expr, typ2: &Expr) -> bool {
+    is_type(typ1) && is_type(typ2) && typ1 == typ2
+}
+
 #[cfg(test)]
 mod tests {
     use crate::ast::Expr;
-    use crate::interpreter::{is_a, is_the_same_as, is_type};
+    use crate::interpreter::{is_a, is_the_same_as, is_the_same_type, is_type};
     use crate::parser::parse;
     use std::borrow::Borrow;
 
@@ -92,6 +96,10 @@ mod tests {
         )
     }
 
+    fn source_is_the_same_type(typ1: &str, typ2: &str) -> bool {
+        is_the_same_type(parse_to_expr(typ1).borrow(), parse_to_expr(typ2).borrow())
+    }
+
     #[test]
     fn atom_test() {
         assert!(source_is_a("'atom", "Atom"));
@@ -105,6 +113,8 @@ mod tests {
 
         assert!(!source_is_type("'atom"));
         assert!(source_is_type("Atom"));
+
+        assert!(source_is_the_same_type("Atom", "Atom"));
     }
 
     #[test]
@@ -125,6 +135,12 @@ mod tests {
 
         assert!(!source_is_type("(cons 'x 'y)"));
         assert!(source_is_type("(Pair Atom Atom)"));
+
+        assert!(!source_is_the_same_type("(Pair Atom Atom)", "Atom"));
+        assert!(source_is_the_same_type(
+            "(Pair Atom Atom)",
+            "(Pair Atom Atom)"
+        ));
     }
 
     #[test]
