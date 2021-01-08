@@ -1,15 +1,14 @@
+use crate::ast::{expr_list_to_string, Expr, ExprList};
 use pest::Parser;
 use std::fmt::Debug;
 use std::hash::Hash;
-use crate::ast::{Expr, ExprList, expr_list_to_string};
 
 #[derive(Parser)]
 #[grammar = "pie.pest"]
 pub struct PieParser;
 
-
 pub struct ParseError {
-    msg: String
+    msg: String,
 }
 
 impl std::fmt::Display for ParseError {
@@ -21,11 +20,13 @@ impl std::fmt::Display for ParseError {
 pub type ParseResult<T> = std::result::Result<T, ParseError>;
 
 impl<T> From<pest::error::Error<T>> for ParseError
-    where
-        T: Debug + Ord + Copy + Hash,
+where
+    T: Debug + Ord + Copy + Hash,
 {
     fn from(error: pest::error::Error<T>) -> Self {
-        ParseError { msg: format!("{}", error) }
+        ParseError {
+            msg: format!("{}", error),
+        }
     }
 }
 
@@ -35,15 +36,16 @@ fn is_eoi(parsed: &pest::iterators::Pair<Rule>) -> bool {
 
 fn read_pie(parsed: pest::iterators::Pair<Rule>) -> ParseResult<ExprList> {
     match parsed.as_rule() {
-        Rule::pie => {
-            read_exprs(parsed.into_inner())
-        }
+        Rule::pie => read_exprs(parsed.into_inner()),
         _ => unreachable!(),
     }
 }
 
 fn read_exprs(parsed: pest::iterators::Pairs<Rule>) -> ParseResult<ExprList> {
-    parsed.filter(|child| !is_eoi(child)).map(read_expr).collect()
+    parsed
+        .filter(|child| !is_eoi(child))
+        .map(read_expr)
+        .collect()
 }
 
 fn read_binary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(Box<Expr>, Box<Expr>)> {
@@ -74,11 +76,21 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
             let ident = parsed.as_str().to_string();
             match ident.as_str() {
                 "Atom" => Ok(Box::new(Expr::TAtom)),
-                _ => Ok(Box::new(Expr::Var(ident)))
+                _ => Ok(Box::new(Expr::Var(ident))),
             }
         }
+        Rule::car => {
+            let mut inner_rule = parsed.into_inner();
+            let e = read_expr(inner_rule.next().unwrap())?;
+            Ok(Box::new(Expr::Car(e)))
+        }
+        Rule::cdr => {
+            let mut inner_rule = parsed.into_inner();
+            let e = read_expr(inner_rule.next().unwrap())?;
+            Ok(Box::new(Expr::Cdr(e)))
+        }
         Rule::atom => Ok(Box::new(Expr::Atom(parsed.as_str()[1..].to_string()))),
-        _ => unreachable!()
+        _ => unreachable!(),
     }
 }
 
@@ -90,14 +102,14 @@ pub fn parse(source: &str) -> ParseResult<Vec<Box<Expr>>> {
 pub fn result_to_string(result: &ParseResult<Vec<Box<Expr>>>) -> String {
     match result {
         Ok(exprs) => format!("{}", expr_list_to_string(&exprs)),
-        Err(ParseError { msg }) => format!("Parse Error:\n{}", msg)
+        Err(ParseError { msg }) => format!("Parse Error:\n{}", msg),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::result_to_string;
     use crate::parser::parse;
+    use crate::parser::result_to_string;
 
     fn parse_and_to_string(source: &str) -> String {
         result_to_string(&parse(source))

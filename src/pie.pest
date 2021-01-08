@@ -12,6 +12,10 @@ pair = { "(" ~ "Pair" ~ expr ~ expr ~ ")" }
 
 sexpr = { "(" ~ expr ~ expr* ~ ")" }
 
-expr = { cons | pair | atom | ident | sexpr }
+car = { "(" ~ "car" ~ expr ~ ")" }
+
+cdr = { "(" ~ "cdr" ~ expr ~ ")" }
+
+expr = { cons | pair | atom | car | cdr | ident | sexpr }
 
 pie = { SOI ~ expr* ~ EOI }

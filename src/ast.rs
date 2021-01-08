@@ -7,19 +7,22 @@ pub enum Expr {
     Atom(String),
     TPair(Box<Expr>, Box<Expr>),
     Cons(Box<Expr>, Box<Expr>),
+    Car(Box<Expr>),
+    Cdr(Box<Expr>),
     App(Box<Expr>, ExprList),
 }
-
 
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Expr::Atom(ident) => write!(f, "'{}", ident),
             Expr::Var(ident) => write!(f, "{}", ident),
-            Expr::App(func, args) => write!(f, "({} {})", *func, expr_list_to_string(args)),
             Expr::TAtom => write!(f, "Atom"),
             Expr::TPair(t1, t2) => write!(f, "(Pair {} {})", t1, t2),
-            Expr::Cons(e1, e2) => write!(f, "(cons {} {})", e1, e2)
+            Expr::Cons(e1, e2) => write!(f, "(cons {} {})", e1, e2),
+            Expr::Car(e) => write!(f, "(car {})", e),
+            Expr::Cdr(e) => write!(f, "(cdr {})", e),
+            Expr::App(func, args) => write!(f, "({} {})", *func, expr_list_to_string(args)),
         }
     }
 }
