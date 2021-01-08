@@ -42,6 +42,32 @@ pub fn has_type(expr: &Expr) -> Result<Expr, TypeError> {
     }
 }
 
+pub fn eval(expr: &Expr) -> Result<Expr, TypeError> {
+    match expr {
+        Expr::Var(_) => unimplemented!(),
+        Expr::TAtom | Expr::Atom(_) => Ok(expr.clone()),
+        Expr::App(_, _) => unimplemented!(),
+        Expr::TPair(e1, e2) => {
+            let new_e1 = eval(e1)?;
+            let new_e2 = eval(e2)?;
+            Ok(Expr::TPair(Box::new(new_e1), Box::new(new_e2)))
+        }
+        Expr::Car(e) => match &**e {
+            Expr::Cons(e1, _) => eval(&e1),
+            _ => unreachable!(),
+        },
+        Expr::Cdr(e) => match &**e {
+            Expr::Cons(_, e2) => eval(&e2),
+            _ => unreachable!(),
+        },
+        Expr::Cons(e1, e2) => {
+            let t1 = eval(e1)?;
+            let t2 = eval(e2)?;
+            Ok(Expr::Cons(Box::new(t1), Box::new(t2)))
+        }
+    }
+}
+
 pub fn is_type(expr: &Expr) -> bool {
     match expr {
         Expr::Var(_) => unimplemented!(),
@@ -52,11 +78,11 @@ pub fn is_type(expr: &Expr) -> bool {
 }
 
 pub fn is_the_same_as(expr1: &Expr, typ: &Expr, expr2: &Expr) -> bool {
-    is_a(expr1, typ) && is_a(expr2, typ) && expr1 == expr2
+    is_a(expr1, typ) && is_a(expr2, typ) && eval(expr1) == eval(expr2)
 }
 
 pub fn is_the_same_type(typ1: &Expr, typ2: &Expr) -> bool {
-    is_type(typ1) && is_type(typ2) && typ1 == typ2
+    is_type(typ1) && is_type(typ2) && eval(typ1) == eval(typ2)
 }
 
 #[cfg(test)]
@@ -150,6 +176,12 @@ mod tests {
             "(Pair Atom Atom)"
         ));
         assert!(source_is_a("(cdr (cons (cons 'x 'y) 'z))", "Atom"));
+
+        assert!(source_is_the_same_as(
+            "(cdr (cons (cons 'x 'y) 'z))",
+            "Atom",
+            "'z"
+        ));
 
         assert!(!source_is_type("(car (cons 'x 'y))"));
         assert!(!source_is_type("(cdr (cons 'x 'y))"));
