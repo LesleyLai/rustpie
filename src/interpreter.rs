@@ -58,7 +58,7 @@ pub fn is_the_same_as(expr1: &Expr, typ: &Expr, expr2: &Expr) -> bool {
 #[cfg(test)]
 mod tests {
     use crate::ast::Expr;
-    use crate::interpreter::{is_a, is_the_same_as};
+    use crate::interpreter::{is_a, is_the_same_as, is_type};
     use crate::parser::parse;
     use std::borrow::Borrow;
 
@@ -80,6 +80,10 @@ mod tests {
         is_a(parse_to_expr(expr).borrow(), parse_to_expr(typ).borrow())
     }
 
+    fn source_is_type(expr: &str) -> bool {
+        is_type(parse_to_expr(expr).borrow())
+    }
+
     fn source_is_the_same_as(e1: &str, typ: &str, e2: &str) -> bool {
         is_the_same_as(
             parse_to_expr(e1).borrow(),
@@ -98,6 +102,9 @@ mod tests {
 
         assert!(source_is_the_same_as("'citron", "Atom", "'citron"));
         assert!(!source_is_the_same_as("'pomme", "Atom", "'orange"));
+
+        assert!(!source_is_type("'atom"));
+        assert!(source_is_type("Atom"));
     }
 
     #[test]
@@ -115,11 +122,17 @@ mod tests {
             "(Pair Atom Atom)",
             "(cons 'y 'y)"
         ));
+
+        assert!(!source_is_type("(cons 'x 'y)"));
+        assert!(source_is_type("(Pair Atom Atom)"));
     }
 
     #[test]
     fn car_cdr_test() {
         assert!(source_is_a("(car (cons 'x 'y))", "Atom"));
         assert!(source_is_a("(cdr (cons 'x 'y))", "Atom"));
+
+        assert!(!source_is_type("(car (cons 'x 'y))"));
+        assert!(!source_is_type("(cdr (cons 'x 'y))"));
     }
 }
