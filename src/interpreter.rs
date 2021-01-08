@@ -27,11 +27,11 @@ pub fn has_type(expr: &Expr) -> Result<Expr, TypeError> {
         Expr::App(_, _) => unimplemented!(),
         Expr::TPair(_e1, _e2) => unimplemented!(),
         Expr::Car(e) => match &**e {
-            Expr::Cons(_, e2) => has_type(&e2),
+            Expr::Cons(e1, _) => has_type(&e1),
             _ => Err(TypeError::CannotResolveType(format!("{}", e))),
         },
         Expr::Cdr(e) => match &**e {
-            Expr::Cons(e1, _) => has_type(&e1),
+            Expr::Cons(_, e2) => has_type(&e2),
             _ => Err(TypeError::CannotResolveType(format!("{}", e))),
         },
         Expr::Cons(e1, e2) => {
@@ -145,8 +145,11 @@ mod tests {
 
     #[test]
     fn car_cdr_test() {
-        assert!(source_is_a("(car (cons 'x 'y))", "Atom"));
-        assert!(source_is_a("(cdr (cons 'x 'y))", "Atom"));
+        assert!(source_is_a(
+            "(car (cons (cons 'x 'y) 'z))",
+            "(Pair Atom Atom)"
+        ));
+        assert!(source_is_a("(cdr (cons (cons 'x 'y) 'z))", "Atom"));
 
         assert!(!source_is_type("(car (cons 'x 'y))"));
         assert!(!source_is_type("(cdr (cons 'x 'y))"));
