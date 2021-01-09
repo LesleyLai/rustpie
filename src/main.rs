@@ -9,8 +9,7 @@ extern crate pest_derive;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-use crate::interpreter::eval;
-use crate::interpreter::has_type;
+use crate::interpreter::{eval, global_env, global_tenv, has_type};
 
 const RUSTPIE_VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -22,6 +21,8 @@ fn repl() {
     }
     println!("Rustpie v{}", RUSTPIE_VERSION);
     println!("Use (exit), Ctrl-C, or Ctrl-D to exit prompt");
+    let tenv = global_tenv();
+    let env = global_env();
     loop {
         let readline = rl.readline(">>> ");
         match readline {
@@ -34,13 +35,13 @@ fn repl() {
                 match ast {
                     Err(e) => eprintln!("{}", e),
                     Ok(ast) => {
-                        for (e, t) in ast.iter().map(|e| (e, has_type(&*e))) {
+                        for (e, t) in ast.iter().map(|e| (e, has_type(&*e, &tenv))) {
                             match t {
                                 Err(type_error) => {
                                     eprintln!("{}", type_error);
                                     break;
                                 }
-                                Ok(typ) => match eval(e) {
+                                Ok(typ) => match eval(e, &tenv, &env) {
                                     Err(runtime_error) => {
                                         eprintln!("{}", runtime_error);
                                         break;

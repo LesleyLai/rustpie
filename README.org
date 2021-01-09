@@ -9,6 +9,6 @@ Rustpie is currently in very early development.
 ** Diffrences from the canonial Pie implementation
    There are some differences between the Pie language in Rustpie and the canonical Pie implementation.
 
-** Additional builtin functions
+** Additional special forms
 **** ~(exit)~
-     Exit the program.
+     Exit the program or the repl.
