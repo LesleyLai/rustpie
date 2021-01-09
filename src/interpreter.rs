@@ -39,10 +39,20 @@ pub fn has_type(expr: &Expr) -> Result<Expr, TypeError> {
             let t2 = has_type(e2)?;
             Ok(Expr::TPair(Box::new(t1), Box::new(t2)))
         }
+        Expr::TNat => unimplemented!(),
+        Expr::Zero => Ok(Expr::TNat),
+        Expr::Succ(e) => {
+            let t = has_type(e)?;
+            match t {
+                Expr::TNat => Ok(Expr::TNat),
+                _ => Err(TypeError::CannotResolveType(format!("{}", e))),
+            }
+        }
+        Expr::Nat(_) => Ok(Expr::TNat),
     }
 }
 
-pub fn eval(expr: &Expr) -> Result<Expr, TypeError> {
+pub fn eval(expr: &Expr) -> Result<Expr, String> {
     match expr {
         Expr::Var(_) => unimplemented!(),
         Expr::TAtom | Expr::Atom(_) => Ok(expr.clone()),
@@ -65,13 +75,23 @@ pub fn eval(expr: &Expr) -> Result<Expr, TypeError> {
             let t2 = eval(e2)?;
             Ok(Expr::Cons(Box::new(t1), Box::new(t2)))
         }
+        Expr::TNat => unimplemented!(),
+        Expr::Zero => Ok(Expr::Nat(0)),
+        Expr::Succ(e) => {
+            let v = eval(e)?;
+            match v {
+                Expr::Nat(n) => Ok(Expr::Nat(n + 1)),
+                _ => unreachable!(),
+            }
+        }
+        nat @ Expr::Nat(_) => Ok(nat.clone()),
     }
 }
 
 pub fn is_type(expr: &Expr) -> bool {
     match expr {
         Expr::Var(_) => unimplemented!(),
-        Expr::TAtom | Expr::TPair(_, _) => true,
+        Expr::TAtom | Expr::TNat | Expr::TPair(_, _) => true,
         Expr::App(_, _) => unimplemented!(),
         _ => false,
     }
@@ -185,5 +205,15 @@ mod tests {
 
         assert!(!source_is_type("(car (cons 'x 'y))"));
         assert!(!source_is_type("(cdr (cons 'x 'y))"));
+    }
+
+    #[test]
+    fn natural_test() {
+        assert!(source_is_a("0", "Nat"));
+        assert!(source_is_a("42", "Nat"));
+        assert!(!source_is_a("-42", "Nat"));
+
+        assert!(source_is_the_same_as("0", "Nat", "zero"));
+        assert!(source_is_the_same_as("1", "Nat", "(add1 zero)"));
     }
 }

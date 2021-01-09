@@ -3,13 +3,21 @@ pub type ExprList = Vec<Box<Expr>>;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Var(String),
+    // Atom
     TAtom,
     Atom(String),
+    // Pair
     TPair(Box<Expr>, Box<Expr>),
     Cons(Box<Expr>, Box<Expr>),
     Car(Box<Expr>),
     Cdr(Box<Expr>),
+    // Function
     App(Box<Expr>, ExprList),
+    // Natural number
+    TNat,
+    Zero,
+    Succ(Box<Expr>),
+    Nat(u64),
 }
 
 impl std::fmt::Display for Expr {
@@ -23,6 +31,10 @@ impl std::fmt::Display for Expr {
             Expr::Car(e) => write!(f, "(car {})", e),
             Expr::Cdr(e) => write!(f, "(cdr {})", e),
             Expr::App(func, args) => write!(f, "({} {})", *func, expr_list_to_string(args)),
+            Expr::TNat => write!(f, "Nat"),
+            Expr::Zero => write!(f, "zero"),
+            Expr::Succ(e) => write!(f, "(plus1 {})", e),
+            Expr::Nat(n) => write!(f, "{}", n),
         }
     }
 }

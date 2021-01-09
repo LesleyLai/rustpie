@@ -16,6 +16,10 @@ car = { "(" ~ "car" ~ expr ~ ")" }
 
 cdr = { "(" ~ "cdr" ~ expr ~ ")" }
 
-expr = { cons | pair | atom | car | cdr | ident | sexpr }
+nat_literal = { ASCII_DIGIT+ }
+
+add1 = { "(" ~ "add1" ~ expr ~ ")" }
+
+expr = { cons | pair | atom | car | cdr | ident | nat_literal | add1 | sexpr }
 
 pie = { SOI ~ expr* ~ EOI }

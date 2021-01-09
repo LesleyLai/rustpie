@@ -45,7 +45,7 @@ fn repl() {
                                         eprintln!("{}", runtime_error);
                                         break;
                                     }
-                                    Ok(val) => println!("{}: {}", val, typ),
+                                    Ok(val) => println!("(the {} {})", typ, val),
                                 },
                             }
                         }

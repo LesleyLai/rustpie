@@ -48,6 +48,11 @@ fn read_exprs(parsed: pest::iterators::Pairs<Rule>) -> ParseResult<ExprList> {
         .collect()
 }
 
+fn read_unary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
+    let mut inner_rule = parsed.into_inner();
+    read_expr(inner_rule.next().unwrap())
+}
+
 fn read_binary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(Box<Expr>, Box<Expr>)> {
     let mut inner_rule = parsed.into_inner();
     let first = read_expr(inner_rule.next().unwrap())?;
@@ -76,18 +81,23 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
             let ident = parsed.as_str().to_string();
             match ident.as_str() {
                 "Atom" => Ok(Box::new(Expr::TAtom)),
+                "Nat" => Ok(Box::new(Expr::TNat)),
+                "zero" => Ok(Box::new(Expr::Zero)),
                 _ => Ok(Box::new(Expr::Var(ident))),
             }
         }
-        Rule::car => {
-            let mut inner_rule = parsed.into_inner();
-            let e = read_expr(inner_rule.next().unwrap())?;
-            Ok(Box::new(Expr::Car(e)))
-        }
-        Rule::cdr => {
-            let mut inner_rule = parsed.into_inner();
-            let e = read_expr(inner_rule.next().unwrap())?;
-            Ok(Box::new(Expr::Cdr(e)))
+        Rule::car => Ok(Box::new(Expr::Car(read_unary(parsed)?))),
+        Rule::cdr => Ok(Box::new(Expr::Cdr(read_unary(parsed)?))),
+        Rule::add1 => Ok(Box::new(Expr::Succ(read_unary(parsed)?))),
+        Rule::nat_literal => {
+            let val = parsed
+                .as_str()
+                .lines()
+                .next()
+                .unwrap()
+                .parse::<u64>()
+                .unwrap();
+            Ok(Box::new(Expr::Nat(val)))
         }
         Rule::atom => Ok(Box::new(Expr::Atom(parsed.as_str()[1..].to_string()))),
         _ => unreachable!(),
@@ -123,5 +133,8 @@ mod tests {
         assert_eq!(parse_and_to_string("x"), "x");
         assert_eq!(parse_and_to_string("(cons 'x 'x)"), "(cons 'x 'x)");
         assert_eq!(parse_and_to_string("(Pair Atom Atom)"), "(Pair Atom Atom)");
+        assert!(parse("'1").is_err());
+        assert!(parse("(cons '1 'x)").is_err());
+        assert_eq!(parse_and_to_string("1"), "1");
     }
 }
