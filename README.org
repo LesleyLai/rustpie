@@ -1,5 +1,7 @@
 * README
 
+[[https://github.com/LesleyLai/rustpie/workflows/Continuous%20integration/badge.svg]]
+
 *Rustpie* is a Rust implementation of the [[https://docs.racket-lang.org/pie/][Pie]],
 a [[https://en.wikipedia.org/wiki/Dependent_type][dependently typed]] language with a Lisp-like syntax.
 The language is formally specified in the book /[[http://thelittletyper.com/][The Little Typer]]/.
