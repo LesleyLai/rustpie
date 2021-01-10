@@ -23,6 +23,7 @@ pub fn is_a(expr: &Expr, typ: &Expr, tenv: &TypeEnv) -> bool {
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypeError {
     CannotResolveType(String),
+    SyntaxUnaryArgumentTypeMismatch(String, String, String),
 }
 
 impl std::fmt::Display for TypeError {
@@ -31,6 +32,28 @@ impl std::fmt::Display for TypeError {
             TypeError::CannotResolveType(e) => {
                 write!(f, "Cannot resolve the type of expression {}", e)
             }
+            TypeError::SyntaxUnaryArgumentTypeMismatch(syntax, expect, actual) => write!(
+                f,
+                "Argument of {} need to be an instance of {}\n Actual: {}",
+                syntax, expect, actual
+            ),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum RuntimeError {
+    VarClaimedNotDefined(String, Expr),
+}
+
+impl std::fmt::Display for RuntimeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            RuntimeError::VarClaimedNotDefined(ident, typ) => write!(
+                f,
+                "The variable {} is claimed to be a {}, but is never defined",
+                ident, typ
+            ),
         }
     }
 }
@@ -45,13 +68,21 @@ pub fn has_type(expr: &Expr, tenv: &TypeEnv) -> Result<Expr, TypeError> {
         Expr::Atom(_) => Ok(Expr::TAtom),
         Expr::App(_, _) => unimplemented!(),
         Expr::TPair(_e1, _e2) => unimplemented!(),
-        Expr::Car(e) => match has_type(&e, tenv) {
-            Ok(Expr::TPair(t1, _)) => Ok(*t1),
-            _ => Err(TypeError::CannotResolveType(format!("{}", e))),
+        Expr::Car(e) => match has_type(&e, tenv)? {
+            Expr::TPair(t1, _) => Ok(*t1),
+            t => Err(TypeError::SyntaxUnaryArgumentTypeMismatch(
+                "car".to_string(),
+                "Pair".to_string(),
+                format!("{}", t),
+            )),
         },
-        Expr::Cdr(e) => match &**e {
-            Expr::Cons(_, e2) => has_type(&e2, tenv),
-            _ => Err(TypeError::CannotResolveType(format!("{}", e))),
+        Expr::Cdr(e) => match has_type(&e, tenv)? {
+            Expr::TPair(_, t2) => Ok(*t2),
+            t => Err(TypeError::SyntaxUnaryArgumentTypeMismatch(
+                "cdr".to_string(),
+                "Pair".to_string(),
+                format!("{}", t),
+            )),
         },
         Expr::Cons(e1, e2) => {
             let t1 = has_type(e1, tenv)?;
@@ -60,25 +91,25 @@ pub fn has_type(expr: &Expr, tenv: &TypeEnv) -> Result<Expr, TypeError> {
         }
         Expr::TNat => unimplemented!(),
         Expr::Zero => Ok(Expr::TNat),
-        Expr::Succ(e) => {
-            let t = has_type(e, tenv)?;
-            match t {
-                Expr::TNat => Ok(Expr::TNat),
-                _ => Err(TypeError::CannotResolveType(format!("{}", e))),
-            }
-        }
+        Expr::Succ(e) => match has_type(e, tenv)? {
+            Expr::TNat => Ok(Expr::TNat),
+            t => Err(TypeError::SyntaxUnaryArgumentTypeMismatch(
+                "add1".to_string(),
+                "Nat".to_string(),
+                format!("{}", t),
+            )),
+        },
         Expr::Nat(_) => Ok(Expr::TNat),
     }
 }
 
-pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, String> {
+pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, RuntimeError> {
     match expr {
         Expr::Var(ident) => match env.get(ident) {
             Some(e) => Ok(e.clone()),
-            None => Err(format!(
-                "The variable {} is claimed as {} but not defined!",
-                ident,
-                tenv.get(ident).unwrap(),
+            None => Err(RuntimeError::VarClaimedNotDefined(
+                ident.clone(),
+                tenv.get(ident).unwrap().clone(),
             )),
         },
         Expr::App(_, _) => unimplemented!(),
