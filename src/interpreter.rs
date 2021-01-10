@@ -168,10 +168,8 @@ pub fn is_the_same_type(typ1: &Expr, typ2: &Expr, tenv: &TypeEnv) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::ast::Expr;
-    use crate::interpreter::{
-        global_env, global_tenv, is_a, is_the_same_as, is_the_same_type, is_type, Env, TypeEnv,
-    };
+    use crate::ast::{Expr, Toplevel};
+    use crate::interpreter::*;
     use crate::parser::parse;
     use std::borrow::Borrow;
 
@@ -181,11 +179,12 @@ mod tests {
                 if exprs.len() != 1 {
                     panic!("Parse result of \"{}\" is not a single expression", source);
                 }
-                exprs.first().unwrap().clone()
+                match exprs.first().unwrap() {
+                    Toplevel::Expr(e) => e.clone(),
+                    _ => panic!("{} is not an expression", source),
+                }
             }
-            Err(_) => {
-                panic!("\"{}\" failed to parse", source)
-            }
+            Err(_) => panic!("\"{}\" failed to parse", source),
         }
     }
 

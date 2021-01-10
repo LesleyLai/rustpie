@@ -40,7 +40,7 @@ impl std::fmt::Display for Expr {
             Expr::App(func, args) => write!(f, "({} {})", *func, expr_list_to_string(args)),
             Expr::TNat => write!(f, "Nat"),
             Expr::Zero => write!(f, "zero"),
-            Expr::Succ(e) => write!(f, "(plus1 {})", e),
+            Expr::Succ(e) => write!(f, "(add1 {})", e),
             Expr::Nat(n) => write!(f, "{}", n),
         }
     }

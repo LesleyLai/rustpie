@@ -1,3 +1,5 @@
+#![feature(iterator_fold_self)]
+
 mod ast;
 mod interpreter;
 mod parser;
@@ -22,8 +24,8 @@ fn repl() {
     }
     println!("Rustpie v{}", RUSTPIE_VERSION);
     println!("Use (exit), Ctrl-C, or Ctrl-D to exit prompt");
-    let mut tenv = global_tenv();
-    let mut env = global_env();
+    let mut tenv = Box::new(global_tenv());
+    let mut env = Box::new(global_env());
     loop {
         let readline = rl.readline(">>> ");
         match readline {
@@ -52,18 +54,22 @@ fn repl() {
                                     },
                                 },
                                 Toplevel::Claim(ident, e) => {
-                                    if (!is_type(e)) {
+                                    if !is_type(e) {
                                         eprintln!("{} is not a type!", e);
-                                    } else if (tenv.contains_key(ident)) {
+                                    } else if tenv.contains_key(ident) {
                                         eprintln!(
                                             "Error: the variable {} is already claimed!",
                                             ident
                                         );
                                     } else {
-                                        tenv.insert(ident.clone(), eval(e, &tenv, &env).unwrap());
+                                        tenv =
+                                            Box::new(tenv.update(
+                                                ident.clone(),
+                                                eval(e, &tenv, &env).unwrap(),
+                                            ));
                                     }
                                 }
-                                Toplevel::Define(ident, e) => match (tenv.get(ident)) {
+                                Toplevel::Define(ident, e) => match tenv.get(ident) {
                                     None => {
                                         eprintln!("Error: the variable {} is never claimed!", ident)
                                     }
@@ -74,10 +80,10 @@ fn repl() {
                                                 ident, typ
                                             );
                                         } else {
-                                            env.insert(
+                                            env = Box::new(env.update(
                                                 ident.clone(),
                                                 eval(e, &tenv, &env).unwrap(),
-                                            );
+                                            ));
                                         }
                                     }
                                 },

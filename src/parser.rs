@@ -1,4 +1,4 @@
-use crate::ast::{expr_list_to_string, Expr, ExprList, Toplevel};
+use crate::ast::{Expr, ExprList, Toplevel};
 use pest::Parser;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -137,9 +137,16 @@ pub fn parse(source: &str) -> ParseResult<Vec<Toplevel>> {
     read_pie(parsed)
 }
 
-pub fn result_to_string(result: &ParseResult<Vec<Box<Expr>>>) -> String {
+pub fn result_to_string(result: &ParseResult<Vec<Toplevel>>) -> String {
     match result {
-        Ok(exprs) => format!("{}", expr_list_to_string(&exprs)),
+        Ok(toplevels) => toplevels
+            .iter()
+            .map(|toplevel| match toplevel {
+                Toplevel::Expr(e) => format!("{}", e),
+                _ => unimplemented!(),
+            })
+            .fold_first(|acc, item| acc + &item)
+            .unwrap_or("".to_string()),
         Err(ParseError { msg }) => format!("Parse Error:\n{}", msg),
     }
 }
