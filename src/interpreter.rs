@@ -106,6 +106,7 @@ pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, String> {
 }
 
 // Similar to eval, except it will eagerly evaluate arguments of constructors
+#[allow(dead_code)]
 pub fn to_normal_form(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, String> {
     match expr {
         Expr::Var(ident) => Ok(env.get(ident).unwrap().clone()),
@@ -151,12 +152,14 @@ pub fn is_type(expr: &Expr) -> bool {
     }
 }
 
+#[allow(dead_code)]
 pub fn is_the_same_as(expr1: &Expr, typ: &Expr, expr2: &Expr, tenv: &TypeEnv, env: &Env) -> bool {
     is_a(expr1, typ, tenv)
         && is_a(expr2, typ, tenv)
         && to_normal_form(expr1, tenv, env) == to_normal_form(expr2, tenv, env)
 }
 
+#[allow(dead_code)]
 pub fn is_the_same_type(typ1: &Expr, typ2: &Expr, tenv: &TypeEnv) -> bool {
     // Env shouldn't be used
     // TODO(lesley): Better solution for this? Probably seperate types expressions and normal expressions?

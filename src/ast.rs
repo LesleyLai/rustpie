@@ -51,7 +51,7 @@ pub fn expr_list_to_string(list: &[Box<Expr>]) -> String {
     for i in 0..list.len() {
         ret.push_str(&format!("{}", list[i]));
         if i < list.len() - 1 {
-            ret.push_str(" ");
+            ret.push(' ');
         }
     }
     ret

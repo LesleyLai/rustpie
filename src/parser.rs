@@ -76,7 +76,7 @@ fn read_define(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(String, Box<
 fn read_toplevel(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Toplevel> {
     let inner = parsed.into_inner().next().unwrap();
     match inner.as_rule() {
-        Rule::expr => read_expr(inner.into_inner().next().unwrap()).map(|e| Toplevel::Expr(e)),
+        Rule::expr => read_expr(inner.into_inner().next().unwrap()).map(Toplevel::Expr),
         Rule::claim => {
             let (ident, expr) = read_define(inner)?;
             Ok(Toplevel::Claim(ident, expr))
@@ -128,24 +128,24 @@ pub fn parse(source: &str) -> ParseResult<Vec<Toplevel>> {
     read_pie(parsed)
 }
 
-pub fn result_to_string(result: &ParseResult<Vec<Toplevel>>) -> String {
-    match result {
-        Ok(toplevels) => toplevels
-            .iter()
-            .map(|toplevel| match toplevel {
-                Toplevel::Expr(e) => format!("{}", e),
-                _ => unimplemented!(),
-            })
-            .fold_first(|acc, item| acc + &item)
-            .unwrap_or("".to_string()),
-        Err(ParseError { msg }) => format!("Parse Error:\n{}", msg),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use crate::parser::parse;
-    use crate::parser::result_to_string;
+    use crate::parser::*;
+
+    pub fn result_to_string(result: &ParseResult<Vec<Toplevel>>) -> String {
+        match result {
+            Ok(toplevels) => toplevels
+                .iter()
+                .map(|toplevel| match toplevel {
+                    Toplevel::Expr(e) => format!("{}", e),
+                    _ => unimplemented!(),
+                })
+                .fold_first(|acc, item| acc + &item)
+                .unwrap_or_else(|| "".to_string()),
+            Err(ParseError { msg }) => format!("Parse Error:\n{}", msg),
+        }
+    }
 
     fn parse_and_to_string(source: &str) -> String {
         result_to_string(&parse(source))
