@@ -20,6 +20,12 @@ nat_literal = { ASCII_DIGIT+ }
 
 add1 = { "(" ~ "add1" ~ expr ~ ")" }
 
+claim = { "(" ~ "claim" ~ ident ~ expr ~ ")" }
+
+define = { "(" ~ "define" ~ ident ~ expr ~ ")" }
+
 expr = { cons | pair | atom | car | cdr | ident | nat_literal | add1 | sexpr }
 
-pie = { SOI ~ expr* ~ EOI }
+toplevel = { claim | define | expr }
+
+pie = { SOI ~ toplevel* ~ EOI }

@@ -20,6 +20,13 @@ pub enum Expr {
     Nat(u64),
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Toplevel {
+    Expr(Box<Expr>),
+    Claim(String, Box<Expr>),
+    Define(String, Box<Expr>),
+}
+
 impl std::fmt::Display for Expr {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {

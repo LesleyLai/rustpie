@@ -5,11 +5,15 @@ pub type TypeEnv = HashMap<String, Expr>;
 pub type Env = HashMap<String, Expr>;
 
 pub fn global_tenv() -> TypeEnv {
-    hashmap! {"x".to_string() => Expr::TAtom}
+    hashmap! {
+        // "x".to_string() => Expr::TAtom
+    }
 }
 
 pub fn global_env() -> Env {
-    hashmap! {"x".to_string() => Expr::Atom("x".to_string())}
+    hashmap! {
+        // "x".to_string() => Expr::Atom("x".to_string())
+    }
 }
 
 pub fn is_a(expr: &Expr, typ: &Expr, tenv: &TypeEnv) -> bool {
@@ -41,8 +45,8 @@ pub fn has_type(expr: &Expr, tenv: &TypeEnv) -> Result<Expr, TypeError> {
         Expr::Atom(_) => Ok(Expr::TAtom),
         Expr::App(_, _) => unimplemented!(),
         Expr::TPair(_e1, _e2) => unimplemented!(),
-        Expr::Car(e) => match &**e {
-            Expr::Cons(e1, _) => has_type(&e1, tenv),
+        Expr::Car(e) => match has_type(&e, tenv) {
+            Ok(Expr::TPair(t1, _)) => Ok(*t1),
             _ => Err(TypeError::CannotResolveType(format!("{}", e))),
         },
         Expr::Cdr(e) => match &**e {
@@ -69,23 +73,35 @@ pub fn has_type(expr: &Expr, tenv: &TypeEnv) -> Result<Expr, TypeError> {
 
 pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, String> {
     match expr {
-        Expr::Var(ident) => Ok(env.get(ident).unwrap().clone()),
-        Expr::TAtom | Expr::Atom(_) => Ok(expr.clone()),
+        Expr::Var(ident) => match env.get(ident) {
+            Some(e) => Ok(e.clone()),
+            None => Err(format!(
+                "The variable {} is claimed as {} but not defined!",
+                ident,
+                tenv.get(ident).unwrap(),
+            )),
+        },
         Expr::App(_, _) => unimplemented!(),
-        tpair @ Expr::TPair(_, _) => Ok(tpair.clone()),
-        Expr::Car(e) => match &**e {
+        Expr::Car(e) => match eval(e, &tenv, env)? {
             Expr::Cons(e1, _) => eval(&e1, tenv, env),
-            _ => unreachable!(),
+            _ => {
+                eprintln!("{}", e);
+                unreachable!();
+            }
         },
         Expr::Cdr(e) => match &**e {
             Expr::Cons(_, e2) => eval(&e2, tenv, env),
             _ => unreachable!(),
         },
-        cons @ Expr::Cons(_, _) => Ok(cons.clone()),
-        Expr::TNat => unimplemented!(),
-        Expr::Zero => Ok(Expr::Nat(0)),
-        succ @ Expr::Succ(_) => Ok(succ.clone()),
         nat @ Expr::Nat(_) => Ok(nat.clone()),
+        // Eval for constructors does nothing interesting
+        Expr::TAtom
+        | Expr::Atom(_)
+        | Expr::TPair(_, _)
+        | Expr::Cons(_, _)
+        | Expr::TNat
+        | Expr::Zero
+        | Expr::Succ(_) => Ok(expr.clone()),
     }
 }
 
@@ -96,27 +112,27 @@ pub fn to_normal_form(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, St
         Expr::TAtom | Expr::Atom(_) => Ok(expr.clone()),
         Expr::App(_, _) => unimplemented!(),
         Expr::TPair(e1, e2) => {
-            let new_e1 = eval(e1, tenv, env)?;
-            let new_e2 = eval(e2, tenv, env)?;
+            let new_e1 = to_normal_form(e1, tenv, env)?;
+            let new_e2 = to_normal_form(e2, tenv, env)?;
             Ok(Expr::TPair(Box::new(new_e1), Box::new(new_e2)))
         }
         Expr::Car(e) => match &**e {
-            Expr::Cons(e1, _) => eval(&e1, tenv, env),
+            Expr::Cons(e1, _) => to_normal_form(&e1, tenv, env),
             _ => unreachable!(),
         },
         Expr::Cdr(e) => match &**e {
-            Expr::Cons(_, e2) => eval(&e2, tenv, env),
+            Expr::Cons(_, e2) => to_normal_form(&e2, tenv, env),
             _ => unreachable!(),
         },
         Expr::Cons(e1, e2) => {
-            let t1 = eval(e1, tenv, env)?;
-            let t2 = eval(e2, tenv, env)?;
+            let t1 = to_normal_form(e1, tenv, env)?;
+            let t2 = to_normal_form(e2, tenv, env)?;
             Ok(Expr::Cons(Box::new(t1), Box::new(t2)))
         }
         Expr::TNat => unimplemented!(),
         Expr::Zero => Ok(Expr::Nat(0)),
         Expr::Succ(e) => {
-            let v = eval(e, tenv, env)?;
+            let v = to_normal_form(e, tenv, env)?;
             match v {
                 Expr::Nat(n) => Ok(Expr::Nat(n + 1)),
                 _ => unreachable!(),
@@ -128,7 +144,7 @@ pub fn to_normal_form(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, St
 
 pub fn is_type(expr: &Expr) -> bool {
     match expr {
-        Expr::Var(_) => unimplemented!(),
+        Expr::Var(_) => false,
         Expr::TAtom | Expr::TNat | Expr::TPair(_, _) => true,
         Expr::App(_, _) => unimplemented!(),
         _ => false,
@@ -138,14 +154,16 @@ pub fn is_type(expr: &Expr) -> bool {
 pub fn is_the_same_as(expr1: &Expr, typ: &Expr, expr2: &Expr, tenv: &TypeEnv, env: &Env) -> bool {
     is_a(expr1, typ, tenv)
         && is_a(expr2, typ, tenv)
-        && to_normal_form(expr1, tenv, env) == eval(expr2, tenv, env)
+        && to_normal_form(expr1, tenv, env) == to_normal_form(expr2, tenv, env)
 }
 
 pub fn is_the_same_type(typ1: &Expr, typ2: &Expr, tenv: &TypeEnv) -> bool {
     // Env shouldn't be used
     // TODO(lesley): Better solution for this? Probably seperate types expressions and normal expressions?
     let env = global_env();
-    is_type(typ1) && is_type(typ2) && eval(typ1, tenv, &env) == eval(typ2, tenv, &env)
+    is_type(typ1)
+        && is_type(typ2)
+        && to_normal_form(typ1, tenv, &env) == to_normal_form(typ2, tenv, &env)
 }
 
 #[cfg(test)]
@@ -300,7 +318,7 @@ mod tests {
         assert!(source_is_a("42", "Nat", tenv));
         assert!(!source_is_a("-42", "Nat", tenv));
 
-        //assert!(source_is_the_same_as("0", "Nat", "zero", tenv, env));
-        // assert!(source_is_the_same_as("1", "Nat", "(add1 zero)", tenv, env));
+        assert!(source_is_the_same_as("0", "Nat", "zero", tenv, env));
+        assert!(source_is_the_same_as("1", "Nat", "(add1 zero)", tenv, env));
     }
 }

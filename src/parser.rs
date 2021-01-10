@@ -1,4 +1,4 @@
-use crate::ast::{expr_list_to_string, Expr, ExprList};
+use crate::ast::{expr_list_to_string, Expr, ExprList, Toplevel};
 use pest::Parser;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -34,9 +34,13 @@ fn is_eoi(parsed: &pest::iterators::Pair<Rule>) -> bool {
     parsed.as_rule() == Rule::EOI
 }
 
-fn read_pie(parsed: pest::iterators::Pair<Rule>) -> ParseResult<ExprList> {
+fn read_pie(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Vec<Toplevel>> {
     match parsed.as_rule() {
-        Rule::pie => read_exprs(parsed.into_inner()),
+        Rule::pie => parsed
+            .into_inner()
+            .filter(|child| !is_eoi(child))
+            .map(read_toplevel)
+            .collect(),
         _ => unreachable!(),
     }
 }
@@ -59,6 +63,30 @@ fn read_binary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(Box<Expr>, B
     let second = read_expr(inner_rule.next().unwrap())?;
     assert!(inner_rule.next().is_none());
     Ok((first, second))
+}
+
+fn read_define(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(String, Box<Expr>)> {
+    let mut inner_rule = parsed.into_inner();
+    let ident = inner_rule.next().unwrap().as_str().to_string();
+    let expr = read_expr(inner_rule.next().unwrap())?;
+    assert!(inner_rule.next().is_none());
+    Ok((ident, expr))
+}
+
+fn read_toplevel(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Toplevel> {
+    let inner = parsed.into_inner().next().unwrap();
+    match inner.as_rule() {
+        Rule::expr => read_expr(inner.into_inner().next().unwrap()).map(|e| Toplevel::Expr(e)),
+        Rule::claim => {
+            let (ident, expr) = read_define(inner)?;
+            Ok(Toplevel::Claim(ident, expr))
+        }
+        Rule::define => {
+            let (ident, expr) = read_define(inner)?;
+            Ok(Toplevel::Define(ident, expr))
+        }
+        _ => unreachable!(),
+    }
 }
 
 fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
@@ -104,7 +132,7 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
     }
 }
 
-pub fn parse(source: &str) -> ParseResult<Vec<Box<Expr>>> {
+pub fn parse(source: &str) -> ParseResult<Vec<Toplevel>> {
     let parsed = PieParser::parse(Rule::pie, source)?.next().unwrap();
     read_pie(parsed)
 }
