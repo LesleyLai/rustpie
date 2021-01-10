@@ -16,7 +16,7 @@ car = { "(" ~ "car" ~ expr ~ ")" }
 
 cdr = { "(" ~ "cdr" ~ expr ~ ")" }
 
-nat_literal = { ASCII_DIGIT+ }
+nat_literal = @{ ASCII_DIGIT+ }
 
 add1 = { "(" ~ "add1" ~ expr ~ ")" }
 

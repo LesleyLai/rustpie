@@ -117,16 +117,7 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
         Rule::car => Ok(Box::new(Expr::Car(read_unary(parsed)?))),
         Rule::cdr => Ok(Box::new(Expr::Cdr(read_unary(parsed)?))),
         Rule::add1 => Ok(Box::new(Expr::Succ(read_unary(parsed)?))),
-        Rule::nat_literal => {
-            let val = parsed
-                .as_str()
-                .lines()
-                .next()
-                .unwrap()
-                .parse::<u64>()
-                .unwrap();
-            Ok(Box::new(Expr::Nat(val)))
-        }
+        Rule::nat_literal => Ok(Box::new(Expr::Nat(parsed.as_str().parse::<u64>().unwrap()))),
         Rule::atom => Ok(Box::new(Expr::Atom(parsed.as_str()[1..].to_string()))),
         _ => unreachable!(),
     }
@@ -171,5 +162,6 @@ mod tests {
         assert!(parse("'1").is_err());
         assert!(parse("(cons '1 'x)").is_err());
         assert_eq!(parse_and_to_string("1"), "1");
+        assert_eq!(parse_and_to_string("(cons 42 43)"), "(cons 42 43)");
     }
 }
