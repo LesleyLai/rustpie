@@ -1,4 +1,4 @@
-pub type ExprList = Vec<Box<Expr>>;
+pub type ExprList = Vec<Expr>;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
@@ -22,9 +22,9 @@ pub enum Expr {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Toplevel {
-    Expr(Box<Expr>),
-    Claim(String, Box<Expr>),
-    Define(String, Box<Expr>),
+    Expr(Expr),
+    Claim(String, Expr),
+    Define(String, Expr),
 }
 
 impl std::fmt::Display for Expr {
@@ -46,7 +46,7 @@ impl std::fmt::Display for Expr {
     }
 }
 
-pub fn expr_list_to_string(list: &[Box<Expr>]) -> String {
+pub fn expr_list_to_string(list: &[Expr]) -> String {
     let mut ret = String::new();
     for i in 0..list.len() {
         ret.push_str(&format!("{}", list[i]));

@@ -176,7 +176,7 @@ mod tests {
     use crate::parser::parse;
     use std::borrow::Borrow;
 
-    fn parse_to_expr(source: &str) -> Box<Expr> {
+    fn parse_to_expr(source: &str) -> Expr {
         match parse(source) {
             Ok(exprs) => {
                 if exprs.len() != 1 {

@@ -52,12 +52,12 @@ fn read_exprs(parsed: pest::iterators::Pairs<Rule>) -> ParseResult<ExprList> {
         .collect()
 }
 
-fn read_unary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
+fn read_unary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Expr> {
     let mut inner_rule = parsed.into_inner();
     read_expr(inner_rule.next().unwrap())
 }
 
-fn read_binary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(Box<Expr>, Box<Expr>)> {
+fn read_binary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(Expr, Expr)> {
     let mut inner_rule = parsed.into_inner();
     let first = read_expr(inner_rule.next().unwrap())?;
     let second = read_expr(inner_rule.next().unwrap())?;
@@ -65,7 +65,7 @@ fn read_binary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(Box<Expr>, B
     Ok((first, second))
 }
 
-fn read_define(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(String, Box<Expr>)> {
+fn read_define(parsed: pest::iterators::Pair<Rule>) -> ParseResult<(String, Expr)> {
     let mut inner_rule = parsed.into_inner();
     let ident = inner_rule.next().unwrap().as_str().to_string();
     let expr = read_expr(inner_rule.next().unwrap())?;
@@ -89,36 +89,36 @@ fn read_toplevel(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Toplevel> {
     }
 }
 
-fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Box<Expr>> {
+fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Expr> {
     match parsed.as_rule() {
         Rule::expr => read_expr(parsed.into_inner().next().unwrap()),
         Rule::cons => {
             let (first, second) = read_binary(parsed)?;
-            Ok(Box::new(Expr::Cons(first, second)))
+            Ok(Expr::Cons(Box::new(first), Box::new(second)))
         }
         Rule::pair => {
             let (first, second) = read_binary(parsed)?;
-            Ok(Box::new(Expr::TPair(first, second)))
+            Ok(Expr::TPair(Box::new(first), Box::new(second)))
         }
         Rule::sexpr => {
             let mut inner_rule = parsed.into_inner();
             let first = read_expr(inner_rule.next().unwrap())?;
-            Ok(Box::new(Expr::App(first, read_exprs(inner_rule)?)))
+            Ok(Expr::App(Box::new(first), read_exprs(inner_rule)?))
         }
         Rule::ident => {
             let ident = parsed.as_str().to_string();
             match ident.as_str() {
-                "Atom" => Ok(Box::new(Expr::TAtom)),
-                "Nat" => Ok(Box::new(Expr::TNat)),
-                "zero" => Ok(Box::new(Expr::Zero)),
-                _ => Ok(Box::new(Expr::Var(ident))),
+                "Atom" => Ok(Expr::TAtom),
+                "Nat" => Ok(Expr::TNat),
+                "zero" => Ok(Expr::Zero),
+                _ => Ok(Expr::Var(ident)),
             }
         }
-        Rule::car => Ok(Box::new(Expr::Car(read_unary(parsed)?))),
-        Rule::cdr => Ok(Box::new(Expr::Cdr(read_unary(parsed)?))),
-        Rule::add1 => Ok(Box::new(Expr::Succ(read_unary(parsed)?))),
-        Rule::nat_literal => Ok(Box::new(Expr::Nat(parsed.as_str().parse::<u64>().unwrap()))),
-        Rule::atom => Ok(Box::new(Expr::Atom(parsed.as_str()[1..].to_string()))),
+        Rule::car => Ok(Expr::Car(Box::new(read_unary(parsed)?))),
+        Rule::cdr => Ok(Expr::Cdr(Box::new(read_unary(parsed)?))),
+        Rule::add1 => Ok(Expr::Succ(Box::new(read_unary(parsed)?))),
+        Rule::nat_literal => Ok(Expr::Nat(parsed.as_str().parse::<u64>().unwrap())),
+        Rule::atom => Ok(Expr::Atom(parsed.as_str()[1..].to_string())),
         _ => unreachable!(),
     }
 }
