@@ -14,7 +14,7 @@ use rustyline::Editor;
 use crate::ast::Toplevel;
 use crate::interpreter::{eval, global_env, global_tenv, has_type, is_a, is_type};
 
-const RUSTPIE_VERSION: &'static str = env!("CARGO_PKG_VERSION");
+const RUSTPIE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 fn repl() {
     // `()` can be used when no completer is required
