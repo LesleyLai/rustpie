@@ -1,18 +1,77 @@
-use crate::ast::Expr;
+use crate::ast::{Expr, Toplevel};
 use im::{hashmap, HashMap};
 
-pub type TypeEnv = HashMap<String, Expr>;
-pub type Env = HashMap<String, Expr>;
+type TypeEnv = HashMap<String, Expr>;
+type Env = HashMap<String, Expr>;
 
-pub fn global_tenv() -> TypeEnv {
+fn init_global_tenv() -> TypeEnv {
     hashmap! {
         // "x".to_string() => Expr::TAtom
     }
 }
 
-pub fn global_env() -> Env {
+fn init_global_env() -> Env {
     hashmap! {
         // "x".to_string() => Expr::Atom("x".to_string())
+    }
+}
+
+pub struct Interpreter {
+    global_tenv: Box<TypeEnv>,
+    global_env: Box<Env>,
+}
+
+impl Interpreter {
+    pub fn new() -> Self {
+        Interpreter {
+            global_tenv: Box::new(init_global_tenv()),
+            global_env: Box::new(init_global_env()),
+        }
+    }
+
+    // Executes a toplevel
+    // If successful, optionally returns a message
+    // If fail, returns an error message
+    pub fn execute(&mut self, toplevel: &Toplevel) -> Result<Option<String>, String> {
+        match toplevel {
+            Toplevel::Expr(e) => match has_type(&e, &self.global_tenv) {
+                Err(type_error) => Err(format!("{}", type_error)),
+                Ok(typ) => match eval(&e, &self.global_tenv, &self.global_env) {
+                    Err(runtime_error) => Err(format!("{}", runtime_error)),
+                    Ok(val) => Ok(Some(format!("(the {} {})", typ, val))),
+                },
+            },
+            Toplevel::Claim(ident, e) => {
+                if !is_type(&e) {
+                    Err(format!("{} is not a type!", e))
+                } else if self.global_tenv.contains_key(ident) {
+                    Err(format!("Error: the variable {} is already claimed!", ident))
+                } else {
+                    self.global_tenv = Box::new(self.global_tenv.update(
+                        ident.clone(),
+                        eval(&e, &self.global_tenv, &self.global_env).unwrap(),
+                    ));
+                    Ok(None)
+                }
+            }
+            Toplevel::Define(ident, e) => match self.global_tenv.get(ident) {
+                None => Err(format!("Error: the variable {} is never claimed!", ident)),
+                Some(typ) => {
+                    if !is_a(&e, typ, &self.global_tenv) {
+                        Err(format!(
+                            "Error: the variable {} is claimed to be a {}!",
+                            ident, typ
+                        ))
+                    } else {
+                        self.global_env = Box::new(self.global_env.update(
+                            ident.clone(),
+                            eval(&e, &self.global_tenv, &self.global_env).unwrap(),
+                        ));
+                        Ok(None)
+                    }
+                }
+            },
+        }
     }
 }
 
@@ -194,7 +253,7 @@ pub fn is_the_same_as(expr1: &Expr, typ: &Expr, expr2: &Expr, tenv: &TypeEnv, en
 pub fn is_the_same_type(typ1: &Expr, typ2: &Expr, tenv: &TypeEnv) -> bool {
     // Env shouldn't be used
     // TODO(lesley): Better solution for this? Probably seperate types expressions and normal expressions?
-    let env = global_env();
+    let env = init_global_env();
     is_type(typ1)
         && is_type(typ2)
         && to_normal_form(typ1, tenv, &env) == to_normal_form(typ2, tenv, &env)
@@ -254,8 +313,8 @@ mod tests {
 
     #[test]
     fn atom_test() {
-        let tenv = &global_tenv();
-        let env = &global_env();
+        let tenv = &init_global_tenv();
+        let env = &init_global_env();
 
         assert!(source_is_a("'atom", "Atom", tenv));
         assert!(source_is_a("'ratatouille", "Atom", tenv));
@@ -278,8 +337,8 @@ mod tests {
 
     #[test]
     fn pair_test() {
-        let tenv = &global_tenv();
-        let env = &global_env();
+        let tenv = &init_global_tenv();
+        let env = &init_global_env();
 
         assert!(source_is_a("(cons 'x 'y)", "(Pair Atom Atom)", &tenv));
 
@@ -312,8 +371,8 @@ mod tests {
 
     #[test]
     fn car_cdr_test() {
-        let tenv = &global_tenv();
-        let env = &global_env();
+        let tenv = &init_global_tenv();
+        let env = &init_global_env();
 
         assert!(source_is_a(
             "(car (cons (cons 'x 'y) 'z))",
@@ -344,8 +403,8 @@ mod tests {
 
     #[test]
     fn natural_test() {
-        let tenv = &global_tenv();
-        let env = &global_env();
+        let tenv = &init_global_tenv();
+        let env = &init_global_env();
 
         assert!(source_is_a("0", "Nat", tenv));
         assert!(source_is_a("42", "Nat", tenv));

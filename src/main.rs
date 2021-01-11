@@ -11,8 +11,7 @@ extern crate pest_derive;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
 
-use crate::ast::Toplevel;
-use crate::interpreter::{eval, global_env, global_tenv, has_type, is_a, is_type};
+use crate::interpreter::Interpreter;
 
 const RUSTPIE_VERSION: &str = env!("CARGO_PKG_VERSION");
 
@@ -24,8 +23,7 @@ fn repl() {
     }
     println!("Rustpie v{}", RUSTPIE_VERSION);
     println!("Use (exit), Ctrl-C, or Ctrl-D to exit prompt");
-    let mut tenv = Box::new(global_tenv());
-    let mut env = Box::new(global_env());
+    let mut interpreter = Interpreter::new();
     loop {
         let readline = rl.readline(">>> ");
         match readline {
@@ -39,54 +37,10 @@ fn repl() {
                     Err(e) => eprintln!("{}", e),
                     Ok(ast) => {
                         for toplevel in ast.iter() {
-                            match toplevel {
-                                Toplevel::Expr(e) => match has_type(e, &tenv) {
-                                    Err(type_error) => {
-                                        eprintln!("{}", type_error);
-                                        break;
-                                    }
-                                    Ok(typ) => match eval(e, &tenv, &env) {
-                                        Err(runtime_error) => {
-                                            eprintln!("{}", runtime_error);
-                                            break;
-                                        }
-                                        Ok(val) => println!("(the {} {})", typ, val),
-                                    },
-                                },
-                                Toplevel::Claim(ident, e) => {
-                                    if !is_type(e) {
-                                        eprintln!("{} is not a type!", e);
-                                    } else if tenv.contains_key(ident) {
-                                        eprintln!(
-                                            "Error: the variable {} is already claimed!",
-                                            ident
-                                        );
-                                    } else {
-                                        tenv =
-                                            Box::new(tenv.update(
-                                                ident.clone(),
-                                                eval(e, &tenv, &env).unwrap(),
-                                            ));
-                                    }
-                                }
-                                Toplevel::Define(ident, e) => match tenv.get(ident) {
-                                    None => {
-                                        eprintln!("Error: the variable {} is never claimed!", ident)
-                                    }
-                                    Some(typ) => {
-                                        if !is_a(e, typ, &tenv) {
-                                            eprintln!(
-                                                "Error: the variable {} is claimed to be a {}!",
-                                                ident, typ
-                                            );
-                                        } else {
-                                            env = Box::new(env.update(
-                                                ident.clone(),
-                                                eval(e, &tenv, &env).unwrap(),
-                                            ));
-                                        }
-                                    }
-                                },
+                            match interpreter.execute(toplevel) {
+                                Ok(None) => (),
+                                Ok(Some(msg)) => println!("{}", msg),
+                                Err(e) => eprintln!("{}", e),
                             }
                         }
                     }

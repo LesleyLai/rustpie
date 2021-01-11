@@ -7,6 +7,7 @@ use std::hash::Hash;
 #[grammar = "pie.pest"]
 pub struct PieParser;
 
+#[derive(Debug, Clone, PartialEq)]
 pub struct ParseError {
     msg: String,
 }
