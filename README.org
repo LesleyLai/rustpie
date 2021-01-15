@@ -13,4 +13,4 @@ Rustpie is currently in very early development.
 
 ** Additional special forms
 **** ~(exit)~
-     Exit the program or the repl.
+     A toplevel command to exit the repl. Cannot be used in source files.
