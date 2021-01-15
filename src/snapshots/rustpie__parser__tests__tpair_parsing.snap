@@ -1,0 +1,14 @@
+---
+source: src/parser.rs
+expression: "parse(\"(Pair Atom Atom)\")"
+---
+Ok(
+    [
+        Expr(
+            TPair(
+                TAtom,
+                TAtom,
+            ),
+        ),
+    ],
+)

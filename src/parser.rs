@@ -131,38 +131,50 @@ pub fn parse(source: &str) -> ParseResult<Vec<Toplevel>> {
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::parse;
     use crate::parser::*;
 
-    pub fn result_to_string(result: &ParseResult<Vec<Toplevel>>) -> String {
-        match result {
-            Ok(toplevels) => toplevels
-                .iter()
-                .map(|toplevel| match toplevel {
-                    Toplevel::Expr(e) => format!("{}", e),
-                    _ => unimplemented!(),
-                })
-                .fold_first(|acc, item| acc + &item)
-                .unwrap_or_else(|| "".to_string()),
-            Err(ParseError { msg }) => format!("Parse Error:\n{}", msg),
-        }
-    }
-
-    fn parse_and_to_string(source: &str) -> String {
-        result_to_string(&parse(source))
+    #[test]
+    fn test_atom_parsing() {
+        insta::assert_debug_snapshot!(parse("'x"));
     }
 
     #[test]
-    fn parsing_test() {
-        assert_eq!(parse_and_to_string("'x"), "'x");
-        assert!(parse("'").is_err());
-        assert_eq!(parse_and_to_string("Atom"), "Atom");
-        assert_eq!(parse_and_to_string("x"), "x");
-        assert_eq!(parse_and_to_string("(cons 'x 'x)"), "(cons 'x 'x)");
-        assert_eq!(parse_and_to_string("(Pair Atom Atom)"), "(Pair Atom Atom)");
-        assert!(parse("'1").is_err());
-        assert!(parse("(cons '1 'x)").is_err());
-        assert_eq!(parse_and_to_string("1"), "1");
-        assert_eq!(parse_and_to_string("(cons 42 43)"), "(cons 42 43)");
+    fn test_apostrophe_parsing() {
+        insta::assert_debug_snapshot!(parse("'"));
+    }
+
+    #[test]
+    fn test_postrophe_with_num_parsing() {
+        insta::assert_debug_snapshot!(parse("'1"));
+    }
+
+    #[test]
+    fn test_tatom_parsing() {
+        insta::assert_debug_snapshot!(parse("Atom"));
+    }
+
+    #[test]
+    fn test_var_parsing() {
+        insta::assert_debug_snapshot!(parse("x"));
+    }
+
+    #[test]
+    fn test_cons_parsing() {
+        insta::assert_debug_snapshot!(parse("(cons 'x 'x)"));
+    }
+
+    #[test]
+    fn test_tpair_parsing() {
+        insta::assert_debug_snapshot!(parse("(Pair Atom Atom)"));
+    }
+
+    #[test]
+    fn test_nat_literal_parsing() {
+        insta::assert_debug_snapshot!(parse("1"));
+    }
+
+    #[test]
+    fn test_multi_nat_literal_parsing() {
+        insta::assert_debug_snapshot!(parse("(cons 42 42)"));
     }
 }

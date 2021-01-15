@@ -1,0 +1,13 @@
+---
+source: src/parser.rs
+expression: "parse(\"1\")"
+---
+Ok(
+    [
+        Expr(
+            Nat(
+                1,
+            ),
+        ),
+    ],
+)

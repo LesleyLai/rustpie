@@ -1,0 +1,13 @@
+---
+source: src/parser.rs
+expression: "parse(\"'x\")"
+---
+Ok(
+    [
+        Expr(
+            Atom(
+                "x",
+            ),
+        ),
+    ],
+)

@@ -32,15 +32,17 @@ fn repl() {
                 if line.starts_with("(exit)") {
                     break;
                 }
-                let ast = parser::parse(&line);
-                match ast {
+                match parser::parse(&line) {
                     Err(e) => eprintln!("{}", e),
                     Ok(ast) => {
                         for toplevel in ast.iter() {
                             match interpreter.execute(toplevel) {
                                 Ok(None) => (),
                                 Ok(Some(msg)) => println!("{}", msg),
-                                Err(e) => eprintln!("{}", e),
+                                Err(e) => {
+                                    eprintln!("{}", e);
+                                    break;
+                                }
                             }
                         }
                     }

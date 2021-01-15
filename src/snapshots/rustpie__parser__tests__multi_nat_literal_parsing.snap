@@ -1,0 +1,18 @@
+---
+source: src/parser.rs
+expression: "parse(\"(cons 42 42)\")"
+---
+Ok(
+    [
+        Expr(
+            Cons(
+                Nat(
+                    42,
+                ),
+                Nat(
+                    42,
+                ),
+            ),
+        ),
+    ],
+)

@@ -1,0 +1,5 @@
+---
+source: src/interpreter.rs
+expression: "execute(&mut Interpreter::new(), \"(cons x y)\")"
+---
+Cannot resolve the type of expression x

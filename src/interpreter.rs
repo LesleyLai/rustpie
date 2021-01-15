@@ -174,10 +174,7 @@ pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, RuntimeError
         Expr::App(_, _) => unimplemented!(),
         Expr::Car(e) => match eval(e, &tenv, env)? {
             Expr::Cons(e1, _) => eval(&e1, tenv, env),
-            _ => {
-                eprintln!("{}", e);
-                unreachable!();
-            }
+            _ => unreachable!(),
         },
         Expr::Cdr(e) => match &**e {
             Expr::Cons(_, e2) => eval(&e2, tenv, env),
@@ -311,6 +308,21 @@ mod tests {
         )
     }
 
+    fn execute(interpreter: &mut Interpreter, source: &str) -> String {
+        match parse(source) {
+            Err(parse_err) => format!("{}", parse_err),
+            Ok(toplevels) => toplevels
+                .iter()
+                .filter_map(|toplevel| match interpreter.execute(toplevel) {
+                    Ok(res) => res,
+                    Err(err) => Some(err),
+                })
+                .fold("".to_string(), |acc, line| {
+                    format!("{}// {} \n", acc, &line)
+                }),
+        }
+    }
+
     #[test]
     fn atom_test() {
         let tenv = &init_global_tenv();
@@ -413,4 +425,29 @@ mod tests {
         assert!(source_is_the_same_as("0", "Nat", "zero", tenv, env));
         assert!(source_is_the_same_as("1", "Nat", "(add1 zero)", tenv, env));
     }
+
+    #[test]
+    fn test_unknown_variables() {
+        let source = "(cons x y)";
+
+        insta::assert_snapshot!(
+            source,
+            format!("{} {}", source, execute(&mut Interpreter::new(), source))
+        )
+    }
+
+    // #[test]
+    // fn test_bogus_type() {
+    //     insta::assert_snapshot!(execute(&mut Interpreter::new(), "(claim x TTT)"))
+    // }
+
+    // #[test]
+    // fn test_untyped_variables() {
+    //     insta::assert_snapshot!(execute(&mut Interpreter::new(), "(define x Nat)"))
+    // }
+
+    // #[test]
+    // fn test_undefined_variables() {
+    //     insta::assert_snapshot!(execute(&mut Interpreter::new(), "(claim x Nat) x"))
+    // }
 }

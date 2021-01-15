@@ -1,0 +1,11 @@
+---
+source: src/parser.rs
+expression: "parse(\"Atom\")"
+---
+Ok(
+    [
+        Expr(
+            TAtom,
+        ),
+    ],
+)

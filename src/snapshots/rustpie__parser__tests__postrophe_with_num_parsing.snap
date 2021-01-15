@@ -1,0 +1,9 @@
+---
+source: src/parser.rs
+expression: "parse(\"'1\")"
+---
+Err(
+    ParseError {
+        msg: " --> 1:1\n  |\n1 | \'1\n  | ^---\n  |\n  = expected pie",
+    },
+)
