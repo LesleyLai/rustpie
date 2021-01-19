@@ -2,5 +2,5 @@
 source: src/interpreter.rs
 expression: "format!(\"{} {}\", source, execute(& mut Interpreter :: new(), source))"
 ---
-(cons x y) // Cannot resolve the type of expression x 
+(cons x y) // Type Error: Cannot resolve the type of expression x 
 

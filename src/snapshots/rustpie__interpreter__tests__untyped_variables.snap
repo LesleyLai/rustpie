@@ -1,5 +1,0 @@
----
-source: src/interpreter.rs
-expression: "execute(&mut Interpreter::new(), \"(define x Nat)\")"
----
-Error: the variable x is never claimed!

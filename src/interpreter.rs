@@ -35,17 +35,20 @@ impl Interpreter {
     pub fn execute(&mut self, toplevel: &Toplevel) -> Result<Option<String>, String> {
         match toplevel {
             Toplevel::Expr(e) => match has_type(&e, &self.global_tenv) {
-                Err(type_error) => Err(format!("{}", type_error)),
+                Err(type_error) => Err(format!("Type Error: {}", type_error)),
                 Ok(typ) => match eval(&e, &self.global_tenv, &self.global_env) {
-                    Err(runtime_error) => Err(format!("{}", runtime_error)),
+                    Err(runtime_error) => Err(format!("Error: {}", runtime_error)),
                     Ok(val) => Ok(Some(format!("(the {} {})", typ, val))),
                 },
             },
             Toplevel::Claim(ident, e) => {
                 if !is_type(&e) {
-                    Err(format!("{} is not a type!", e))
+                    Err(format!("Type Error: {} is not a type!", e))
                 } else if self.global_tenv.contains_key(ident) {
-                    Err(format!("Error: the variable {} is already claimed!", ident))
+                    Err(format!(
+                        "Type Error: the variable {} is already claimed!",
+                        ident
+                    ))
                 } else {
                     self.global_tenv = Box::new(self.global_tenv.update(
                         ident.clone(),
@@ -55,11 +58,14 @@ impl Interpreter {
                 }
             }
             Toplevel::Define(ident, e) => match self.global_tenv.get(ident) {
-                None => Err(format!("Error: the variable {} is never claimed!", ident)),
+                None => Err(format!(
+                    "Type Error: the variable {} is never claimed!",
+                    ident
+                )),
                 Some(typ) => {
                     if !is_a(&e, typ, &self.global_tenv) {
                         Err(format!(
-                            "Error: the variable {} is claimed to be a {}!",
+                            "Type Error: the variable {} is claimed to be a {}!",
                             ident, typ
                         ))
                     } else {
@@ -262,6 +268,8 @@ mod tests {
     use crate::interpreter::*;
     use crate::parser::parse;
     use std::borrow::Borrow;
+    use std::fs;
+    use std::path::Path;
 
     fn parse_to_expr(source: &str) -> Expr {
         match parse(source) {
@@ -436,18 +444,37 @@ mod tests {
         )
     }
 
-    // #[test]
-    // fn test_bogus_type() {
-    //     insta::assert_snapshot!(execute(&mut Interpreter::new(), "(claim x TTT)"))
-    // }
+    fn snapshpt_test_src<P: AsRef<Path>>(dir: P, filename: P) {
+        assert!(dir.as_ref().is_relative());
 
-    // #[test]
-    // fn test_untyped_variables() {
-    //     insta::assert_snapshot!(execute(&mut Interpreter::new(), "(define x Nat)"))
-    // }
+        let source_dir = Path::new("./testdata").join(dir.as_ref());
+        let source_path = source_dir.join(filename.as_ref());
+        let source = fs::read_to_string(&source_path).expect("Expect a file");
 
-    // #[test]
-    // fn test_undefined_variables() {
-    //     insta::assert_snapshot!(execute(&mut Interpreter::new(), "(claim x Nat) x"))
-    // }
+        let mut settings = insta::Settings::clone_current();
+        settings.set_input_file(source_path);
+        settings.set_snapshot_path(Path::new("..").join(source_dir));
+        settings.set_prepend_module_to_snapshot(false);
+        settings.bind(|| {
+            insta::assert_snapshot!(
+                filename.as_ref().to_str(),
+                format!("{} {}", &source, execute(&mut Interpreter::new(), &source))
+            )
+        });
+    }
+
+    #[test]
+    fn test_bogus_type() {
+        snapshpt_test_src("type_error", "bogus_type.pie");
+    }
+
+    #[test]
+    fn test_untyped_variable() {
+        snapshpt_test_src("type_error", "untyped_variable.pie");
+    }
+
+    #[test]
+    fn test_undefined_variables() {
+        snapshpt_test_src("type_error", "undefined_variable.pie");
+    }
 }

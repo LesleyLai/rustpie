@@ -1,5 +1,0 @@
----
-source: src/interpreter.rs
-expression: "execute(&mut Interpreter::new(), \"(claim x Nat) x\")"
----
-The variable x is claimed to be a Nat, but is never defined
