@@ -1,4 +1,5 @@
 use crate::ast::{Expr, ExprList, Toplevel};
+use num_bigint::BigUint;
 use pest::Parser;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -118,7 +119,7 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Expr> {
         Rule::car => Ok(Expr::Car(Box::new(read_unary(parsed)?))),
         Rule::cdr => Ok(Expr::Cdr(Box::new(read_unary(parsed)?))),
         Rule::add1 => Ok(Expr::Succ(Box::new(read_unary(parsed)?))),
-        Rule::nat_literal => Ok(Expr::Nat(parsed.as_str().parse::<u64>().unwrap())),
+        Rule::nat_literal => Ok(Expr::Nat(parsed.as_str().parse::<BigUint>().unwrap())),
         Rule::atom => Ok(Expr::Atom(parsed.as_str()[1..].to_string())),
         _ => unreachable!(),
     }
@@ -176,5 +177,10 @@ mod tests {
     #[test]
     fn test_multi_nat_literal_parsing() {
         insta::assert_debug_snapshot!(parse("(cons 42 42)"));
+    }
+
+    #[test]
+    fn test_big_nat_literal() {
+        insta::assert_debug_snapshot!(parse("1232143434875236458243451231123"));
     }
 }

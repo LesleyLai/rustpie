@@ -1,5 +1,6 @@
 use crate::ast::{Expr, Toplevel};
 use im::{hashmap, HashMap};
+use num_bigint::ToBigUint;
 
 type TypeEnv = HashMap<String, Expr>;
 type Env = HashMap<String, Expr>;
@@ -224,11 +225,11 @@ pub fn to_normal_form(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, St
             Ok(Expr::Cons(Box::new(t1), Box::new(t2)))
         }
         Expr::TNat => unimplemented!(),
-        Expr::Zero => Ok(Expr::Nat(0)),
+        Expr::Zero => Ok(Expr::Nat(0.to_biguint().unwrap())),
         Expr::Succ(e) => {
             let v = to_normal_form(e, tenv, env)?;
             match v {
-                Expr::Nat(n) => Ok(Expr::Nat(n + 1)),
+                Expr::Nat(n) => Ok(Expr::Nat(n + 1u32)),
                 _ => unreachable!(),
             }
         }

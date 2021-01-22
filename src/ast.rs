@@ -1,3 +1,5 @@
+use num_bigint::BigUint;
+
 pub type ExprList = Vec<Expr>;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -17,7 +19,7 @@ pub enum Expr {
     TNat,
     Zero,
     Succ(Box<Expr>),
-    Nat(u64),
+    Nat(BigUint),
 }
 
 #[derive(Debug, Clone, PartialEq)]

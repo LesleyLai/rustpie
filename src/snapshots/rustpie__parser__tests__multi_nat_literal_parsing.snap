@@ -7,10 +7,18 @@ Ok(
         Expr(
             Cons(
                 Nat(
-                    42,
+                    BigUint {
+                        data: [
+                            42,
+                        ],
+                    },
                 ),
                 Nat(
-                    42,
+                    BigUint {
+                        data: [
+                            42,
+                        ],
+                    },
                 ),
             ),
         ),

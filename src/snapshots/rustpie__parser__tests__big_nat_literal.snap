@@ -1,6 +1,6 @@
 ---
 source: src/parser.rs
-expression: "parse(\"1\")"
+expression: "parse(\"1232143434875236458243451231123\")"
 ---
 Ok(
     [
@@ -8,7 +8,8 @@ Ok(
             Nat(
                 BigUint {
                     data: [
-                        1,
+                        5057191495630298003,
+                        66794629445,
                     ],
                 },
             ),
