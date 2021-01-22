@@ -1,0 +1,55 @@
+---
+source: src/interpreter.rs
+expression: "format!(\"{}\\n\\n;; Results:{}\", & source,\n        execute(& mut Interpreter :: new(), & source))"
+---
+(claim cons Nat)
+(define cons 42)
+
+(claim car Nat)
+(define car 42)
+
+(claim cdr Nat)
+(define cdr 42)
+
+(claim claim Nat)
+(define claim 42)
+
+(claim define Nat)
+(define define 42)
+
+(claim zero Nat)
+(define zero 42)
+
+(claim add1 Nat)
+(define add1 42)
+
+(claim Atom Nat)
+(define Atom 42)
+
+(claim Nat Nat)
+(define Nat 42)
+
+(claim Pair Nat)
+(define Pair 42)
+
+;; Results:
+;; Type Error: Try to claim the identifier cons, which is reserved
+;; Type Error: the variable cons is never claimed!
+;; Type Error: Try to claim the identifier car, which is reserved
+;; Type Error: the variable car is never claimed!
+;; Type Error: Try to claim the identifier cdr, which is reserved
+;; Type Error: the variable cdr is never claimed!
+;; Type Error: Try to claim the identifier claim, which is reserved
+;; Type Error: the variable claim is never claimed!
+;; Type Error: Try to claim the identifier define, which is reserved
+;; Type Error: the variable define is never claimed!
+;; Type Error: Try to claim the identifier zero, which is reserved
+;; Type Error: the variable zero is never claimed!
+;; Type Error: Try to claim the identifier add1, which is reserved
+;; Type Error: the variable add1 is never claimed!
+;; Type Error: Try to claim the identifier Atom, which is reserved
+;; Type Error: the variable Atom is never claimed!
+;; Type Error: Try to claim the identifier Nat, which is reserved
+;; Type Error: the variable Nat is never claimed!
+;; Type Error: Try to claim the identifier Pair, which is reserved
+;; Type Error: the variable Pair is never claimed!

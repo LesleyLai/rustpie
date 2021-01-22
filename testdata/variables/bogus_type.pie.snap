@@ -1,0 +1,9 @@
+---
+source: src/interpreter.rs
+expression: "format!(\"{}\\n\\n;; Results:{}\", & source,\n        execute(& mut Interpreter :: new(), & source))"
+---
+(claim x TTT)
+
+
+;; Results:
+;; Type Error: TTT is not a type!

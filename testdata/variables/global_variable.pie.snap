@@ -1,0 +1,13 @@
+---
+source: src/interpreter.rs
+expression: "format!(\"{}\\n\\n;; Results:{}\", & source,\n        execute(& mut Interpreter :: new(), & source))"
+---
+(claim x (Pair Atom (Pair Nat Nat)))
+(define x (cons 'a (cons 1 2)))
+
+x
+(cons (car x) (car (cdr x)))
+
+;; Results:
+;; (the (Pair Atom (Pair Nat Nat)) (cons 'a (cons 1 2)))
+;; (the (Pair Atom Nat) (cons (car x) (car (cdr x))))

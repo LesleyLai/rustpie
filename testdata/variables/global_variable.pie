@@ -1,0 +1,5 @@
+(claim x (Pair Atom (Pair Nat Nat)))
+(define x (cons 'a (cons 1 2)))
+
+x
+(cons (car x) (car (cdr x)))

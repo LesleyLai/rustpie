@@ -1,0 +1,29 @@
+(claim cons Nat)
+(define cons 42)
+
+(claim car Nat)
+(define car 42)
+
+(claim cdr Nat)
+(define cdr 42)
+
+(claim claim Nat)
+(define claim 42)
+
+(claim define Nat)
+(define define 42)
+
+(claim zero Nat)
+(define zero 42)
+
+(claim add1 Nat)
+(define add1 42)
+
+(claim Atom Nat)
+(define Atom 42)
+
+(claim Nat Nat)
+(define Nat 42)
+
+(claim Pair Nat)
+(define Pair 42)

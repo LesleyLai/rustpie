@@ -1,0 +1,9 @@
+---
+source: src/interpreter.rs
+expression: "format!(\"{}\\n\\n;; Results:{}\", & source,\n        execute(& mut Interpreter :: new(), & source))"
+---
+(define x Nat)
+
+
+;; Results:
+;; Type Error: the variable x is never claimed!

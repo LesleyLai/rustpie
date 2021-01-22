@@ -1,0 +1,9 @@
+---
+source: src/interpreter.rs
+expression: "format!(\"{}\\n\\n;; Results:{}\", & source,\n        execute(& mut Interpreter :: new(), & source))"
+---
+(claim x Nat) x
+
+
+;; Results:
+;; Error: The variable x is claimed to be a Nat, but is never defined

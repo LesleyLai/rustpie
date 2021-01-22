@@ -5,6 +5,10 @@ use num_bigint::ToBigUint;
 type TypeEnv = HashMap<String, Expr>;
 type Env = HashMap<String, Expr>;
 
+const RESERVED_IDENTIFIERS: &[&str] = &[
+    "cons", "car", "cdr", "claim", "define", "zero", "add1", "Atom", "Nat", "Pair",
+];
+
 fn init_global_tenv() -> TypeEnv {
     hashmap! {
         // "x".to_string() => Expr::TAtom
@@ -45,6 +49,14 @@ impl Interpreter {
             Toplevel::Claim(ident, e) => {
                 if !is_type(&e) {
                     Err(format!("Type Error: {} is not a type!", e))
+                } else if RESERVED_IDENTIFIERS
+                    .iter()
+                    .any(|reserved| ident.as_str() == *reserved)
+                {
+                    Err(format!(
+                        "Type Error: Try to claim the identifier {}, which is reserved",
+                        ident
+                    ))
                 } else if self.global_tenv.contains_key(ident) {
                     Err(format!(
                         "Type Error: the variable {} is already claimed!",
@@ -326,9 +338,7 @@ mod tests {
                     Ok(res) => res,
                     Err(err) => Some(err),
                 })
-                .fold("".to_string(), |acc, line| {
-                    format!("{}// {} \n", acc, &line)
-                }),
+                .fold("".to_string(), |acc, line| format!("{}\n;; {}", acc, &line)),
         }
     }
 
@@ -435,16 +445,6 @@ mod tests {
         assert!(source_is_the_same_as("1", "Nat", "(add1 zero)", tenv, env));
     }
 
-    #[test]
-    fn test_unknown_variables() {
-        let source = "(cons x y)";
-
-        insta::assert_snapshot!(
-            source,
-            format!("{} {}", source, execute(&mut Interpreter::new(), source))
-        )
-    }
-
     fn snapshpt_test_src<P: AsRef<Path>>(dir: P, filename: P) {
         assert!(dir.as_ref().is_relative());
 
@@ -459,23 +459,37 @@ mod tests {
         settings.bind(|| {
             insta::assert_snapshot!(
                 filename.as_ref().to_str(),
-                format!("{} {}", &source, execute(&mut Interpreter::new(), &source))
+                format!(
+                    "{}\n\n;; Results:{}",
+                    &source,
+                    execute(&mut Interpreter::new(), &source)
+                )
             )
         });
     }
 
     #[test]
+    fn test_global_variable() {
+        snapshpt_test_src("variables", "global_variable.pie");
+    }
+
+    #[test]
     fn test_bogus_type() {
-        snapshpt_test_src("type_error", "bogus_type.pie");
+        snapshpt_test_src("variables", "bogus_type.pie");
     }
 
     #[test]
     fn test_untyped_variable() {
-        snapshpt_test_src("type_error", "untyped_variable.pie");
+        snapshpt_test_src("variables", "untyped_variable.pie");
     }
 
     #[test]
     fn test_undefined_variables() {
-        snapshpt_test_src("type_error", "undefined_variable.pie");
+        snapshpt_test_src("variables", "undefined_variable.pie");
+    }
+
+    #[test]
+    fn test_reserved() {
+        snapshpt_test_src("variables", "reserved_identifiers.pie");
     }
 }
