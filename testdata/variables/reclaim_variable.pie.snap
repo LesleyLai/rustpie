@@ -1,0 +1,11 @@
+---
+source: src/interpreter.rs
+expression: "format!(\"{}\\n\\n;; Results:{}\", & source,\n        execute(& mut Interpreter :: new(), & source))"
+input_file: testdata/variables/reclaim_variable.pie
+---
+(claim x Nat)
+(claim x Nat)
+
+
+;; Results:
+;; Type Error: the variable x is already claimed!

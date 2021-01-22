@@ -81,6 +81,11 @@ impl Interpreter {
                             "Type Error: the variable {} is claimed to be a {}!",
                             ident, typ
                         ))
+                    } else if self.global_env.contains_key(ident) {
+                        Err(format!(
+                            "Type Error: the variable {} is already defined!",
+                            ident
+                        ))
                     } else {
                         self.global_env = Box::new(self.global_env.update(
                             ident.clone(),
@@ -445,7 +450,7 @@ mod tests {
         assert!(source_is_the_same_as("1", "Nat", "(add1 zero)", tenv, env));
     }
 
-    fn snapshpt_test_src<P: AsRef<Path>>(dir: P, filename: P) {
+    fn snapshot_test_src<P: AsRef<Path>>(dir: P, filename: P) {
         assert!(dir.as_ref().is_relative());
 
         let source_dir = Path::new("./testdata").join(dir.as_ref());
@@ -470,26 +475,36 @@ mod tests {
 
     #[test]
     fn test_global_variable() {
-        snapshpt_test_src("variables", "global_variable.pie");
+        snapshot_test_src("variables", "global_variable.pie");
     }
 
     #[test]
     fn test_bogus_type() {
-        snapshpt_test_src("variables", "bogus_type.pie");
+        snapshot_test_src("variables", "bogus_type.pie");
     }
 
     #[test]
     fn test_untyped_variable() {
-        snapshpt_test_src("variables", "untyped_variable.pie");
+        snapshot_test_src("variables", "untyped_variable.pie");
     }
 
     #[test]
     fn test_undefined_variables() {
-        snapshpt_test_src("variables", "undefined_variable.pie");
+        snapshot_test_src("variables", "undefined_variable.pie");
+    }
+
+    #[test]
+    fn test_reclaim_variable() {
+        snapshot_test_src("variables", "reclaim_variable.pie");
+    }
+
+    #[test]
+    fn test_redefine_variable() {
+        snapshot_test_src("variables", "redefine_variable.pie");
     }
 
     #[test]
     fn test_reserved() {
-        snapshpt_test_src("variables", "reserved_identifiers.pie");
+        snapshot_test_src("variables", "reserved_identifiers.pie");
     }
 }

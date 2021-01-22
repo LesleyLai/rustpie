@@ -1,0 +1,3 @@
+(claim x Nat)
+(define x 42)
+(define x 43)
