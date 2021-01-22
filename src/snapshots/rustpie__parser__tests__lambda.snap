@@ -1,0 +1,27 @@
+---
+source: src/parser.rs
+expression: "parse(\"(lambda (x) (cons x 42))\")"
+---
+Ok(
+    [
+        Expr(
+            Lambda(
+                [
+                    "x",
+                ],
+                Cons(
+                    Var(
+                        "x",
+                    ),
+                    Nat(
+                        BigUint {
+                            data: [
+                                42,
+                            ],
+                        },
+                    ),
+                ),
+            ),
+        ),
+    ],
+)

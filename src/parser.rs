@@ -54,6 +54,16 @@ fn read_exprs(parsed: pest::iterators::Pairs<Rule>) -> ParseResult<ExprList> {
         .collect()
 }
 
+fn read_params(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Vec<String>> {
+    assert!(parsed.as_rule() == Rule::params);
+
+    parsed
+        .into_inner()
+        .filter(|child| !is_eoi(child))
+        .map(|parsed| Ok(parsed.as_str().to_string()))
+        .collect()
+}
+
 fn read_unary(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Expr> {
     let mut inner_rule = parsed.into_inner();
     read_expr(inner_rule.next().unwrap())
@@ -102,6 +112,14 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Expr> {
             let (first, second) = read_binary(parsed)?;
             Ok(Expr::TPair(Box::new(first), Box::new(second)))
         }
+        Rule::lambda => {
+            let mut inner_rule = parsed.into_inner();
+            let params = read_params(inner_rule.next().unwrap())?;
+            let body = read_expr(inner_rule.next().unwrap())?;
+
+            Ok(Expr::Lambda(params, Box::new(body)))
+        }
+
         Rule::sexpr => {
             let mut inner_rule = parsed.into_inner();
             let first = read_expr(inner_rule.next().unwrap())?;
@@ -182,5 +200,11 @@ mod tests {
     #[test]
     fn test_big_nat_literal() {
         insta::assert_debug_snapshot!(parse("1232143434875236458243451231123"));
+    }
+
+    #[test]
+    fn test_lambda() {
+        insta::assert_debug_snapshot!("lambda", parse("(lambda (x) (cons x 42))"));
+        insta::assert_debug_snapshot!("λ", parse("(λ (x) (cons x 42))"));
     }
 }

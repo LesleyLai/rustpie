@@ -24,7 +24,13 @@ claim = { "(" ~ "claim" ~ ident ~ expr ~ ")" }
 
 define = { "(" ~ "define" ~ ident ~ expr ~ ")" }
 
-expr = { cons | pair | atom | car | cdr | ident | nat_literal | add1 | sexpr }
+lambda_symbol = _{ "lambda" | "λ" }
+
+params = { "(" ~ ident+ ~ ")" }
+
+lambda = { "(" ~ lambda_symbol ~ params ~ expr ~ ")" }
+
+expr = { cons | pair | atom | car | cdr | ident | nat_literal | lambda | add1 | sexpr }
 
 toplevel = { claim | define | expr }
 

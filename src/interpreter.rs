@@ -6,7 +6,8 @@ type TypeEnv = HashMap<String, Expr>;
 type Env = HashMap<String, Expr>;
 
 const RESERVED_IDENTIFIERS: &[&str] = &[
-    "cons", "car", "cdr", "claim", "define", "zero", "add1", "Atom", "Nat", "Pair",
+    "cons", "car", "cdr", "claim", "define", "zero", "add1", "lambda", "λ", "->", "Atom", "Nat",
+    "Pair",
 ];
 
 fn init_global_tenv() -> TypeEnv {
@@ -183,6 +184,7 @@ pub fn has_type(expr: &Expr, tenv: &TypeEnv) -> Result<Expr, TypeError> {
             )),
         },
         Expr::Nat(_) => Ok(Expr::TNat),
+        Expr::Lambda(_, _) => unimplemented!(),
     }
 }
 
@@ -213,6 +215,7 @@ pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, RuntimeError
         | Expr::TNat
         | Expr::Zero
         | Expr::Succ(_) => Ok(expr.clone()),
+        Expr::Lambda(_, _) => unimplemented!(),
     }
 }
 
@@ -251,6 +254,7 @@ pub fn to_normal_form(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, St
             }
         }
         nat @ Expr::Nat(_) => Ok(nat.clone()),
+        Expr::Lambda(_, _) => unimplemented!(),
     }
 }
 
@@ -507,4 +511,9 @@ mod tests {
     fn test_reserved() {
         snapshot_test_src("variables", "reserved_identifiers.pie");
     }
+
+    // #[test]
+    // fn test_lambda() {
+    //     snapshot_test_src("functions", "lambda.pie");
+    // }
 }
