@@ -119,7 +119,11 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Expr> {
 
             Ok(Expr::Lambda(params, Box::new(body)))
         }
-
+        Rule::arrow => {
+            let mut exprs = read_exprs(parsed.into_inner())?;
+            let ret_typ = exprs.pop().unwrap();
+            Ok(Expr::TArr(exprs, Box::new(ret_typ)))
+        }
         Rule::sexpr => {
             let mut inner_rule = parsed.into_inner();
             let first = read_expr(inner_rule.next().unwrap())?;
@@ -206,5 +210,10 @@ mod tests {
     fn test_lambda() {
         insta::assert_debug_snapshot!("lambda", parse("(lambda (x) (cons x 42))"));
         insta::assert_debug_snapshot!("λ", parse("(λ (x) (cons x 42))"));
+    }
+
+    #[test]
+    fn test_arrow() {
+        insta::assert_debug_snapshot!("Arrow", parse("(-> Nat (Pair Nat Nat))"));
     }
 }

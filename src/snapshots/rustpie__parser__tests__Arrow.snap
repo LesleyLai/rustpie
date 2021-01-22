@@ -1,0 +1,19 @@
+---
+source: src/parser.rs
+expression: "parse(\"(-> Nat (Pair Nat Nat))\")"
+---
+Ok(
+    [
+        Expr(
+            TArr(
+                [
+                    TNat,
+                ],
+                TPair(
+                    TNat,
+                    TNat,
+                ),
+            ),
+        ),
+    ],
+)

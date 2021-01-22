@@ -185,6 +185,7 @@ pub fn has_type(expr: &Expr, tenv: &TypeEnv) -> Result<Expr, TypeError> {
         },
         Expr::Nat(_) => Ok(Expr::TNat),
         Expr::Lambda(_, _) => unimplemented!(),
+        Expr::TArr(_, _) => unimplemented!(),
     }
 }
 
@@ -214,7 +215,8 @@ pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, RuntimeError
         | Expr::Cons(_, _)
         | Expr::TNat
         | Expr::Zero
-        | Expr::Succ(_) => Ok(expr.clone()),
+        | Expr::Succ(_)
+        | Expr::TArr(_, _) => Ok(expr.clone()),
         Expr::Lambda(_, _) => unimplemented!(),
     }
 }
@@ -255,13 +257,14 @@ pub fn to_normal_form(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, St
         }
         nat @ Expr::Nat(_) => Ok(nat.clone()),
         Expr::Lambda(_, _) => unimplemented!(),
+        Expr::TArr(_, _) => unimplemented!(),
     }
 }
 
 pub fn is_type(expr: &Expr) -> bool {
     match expr {
         Expr::Var(_) => false,
-        Expr::TAtom | Expr::TNat | Expr::TPair(_, _) => true,
+        Expr::TAtom | Expr::TNat | Expr::TPair(_, _) | Expr::TArr(_, _) => true,
         Expr::App(_, _) => unimplemented!(),
         _ => false,
     }
@@ -452,6 +455,11 @@ mod tests {
 
         assert!(source_is_the_same_as("0", "Nat", "zero", tenv, env));
         assert!(source_is_the_same_as("1", "Nat", "(add1 zero)", tenv, env));
+    }
+
+    #[test]
+    fn lambda_test() {
+        assert!(source_is_type("(-> Nat Nat)"));
     }
 
     fn snapshot_test_src<P: AsRef<Path>>(dir: P, filename: P) {

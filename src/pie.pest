@@ -30,7 +30,9 @@ params = { "(" ~ ident+ ~ ")" }
 
 lambda = { "(" ~ lambda_symbol ~ params ~ expr ~ ")" }
 
-expr = { cons | pair | atom | car | cdr | ident | nat_literal | lambda | add1 | sexpr }
+arrow = { "(" ~ "->" ~ expr+ ~ ")" }
+
+expr = { cons | pair | atom | car | cdr | ident | nat_literal | add1 | lambda | arrow | sexpr }
 
 toplevel = { claim | define | expr }
 
