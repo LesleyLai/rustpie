@@ -1,4 +1,5 @@
 * README
+[[./images/logo.svg]]
 
 [[https://github.com/LesleyLai/rustpie/workflows/Continuous%20integration/badge.svg]]
 
