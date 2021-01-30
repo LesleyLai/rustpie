@@ -5,7 +5,9 @@ expression: "parse(\"Atom\")"
 Ok(
     [
         Expr(
-            TAtom,
+            Expr {
+                kind: TAtom,
+            },
         ),
     ],
 )

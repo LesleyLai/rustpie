@@ -5,23 +5,31 @@ expression: "parse(\"(λ (x) (cons x 42))\")"
 Ok(
     [
         Expr(
-            Lambda(
-                [
-                    "x",
-                ],
-                Cons(
-                    Var(
+            Expr {
+                kind: Lambda(
+                    [
                         "x",
-                    ),
-                    Nat(
-                        BigUint {
-                            data: [
-                                42,
-                            ],
-                        },
-                    ),
+                    ],
+                    Expr {
+                        kind: Cons(
+                            Expr {
+                                kind: Var(
+                                    "x",
+                                ),
+                            },
+                            Expr {
+                                kind: Nat(
+                                    BigUint {
+                                        data: [
+                                            42,
+                                        ],
+                                    },
+                                ),
+                            },
+                        ),
+                    },
                 ),
-            ),
+            },
         ),
     ],
 )

@@ -1,4 +1,4 @@
-use crate::ast::{Expr, ExprList, Toplevel};
+use crate::ast::{Expr, ExprKind, ExprList, Toplevel};
 use num_bigint::BigUint;
 use pest::Parser;
 use std::fmt::Debug;
@@ -106,43 +106,71 @@ fn read_expr(parsed: pest::iterators::Pair<Rule>) -> ParseResult<Expr> {
         Rule::expr => read_expr(parsed.into_inner().next().unwrap()),
         Rule::cons => {
             let (first, second) = read_binary(parsed)?;
-            Ok(Expr::Cons(Box::new(first), Box::new(second)))
+            Ok(Expr {
+                kind: ExprKind::Cons(Box::new(first), Box::new(second)),
+            })
         }
         Rule::pair => {
             let (first, second) = read_binary(parsed)?;
-            Ok(Expr::TPair(Box::new(first), Box::new(second)))
+            Ok(Expr {
+                kind: ExprKind::TPair(Box::new(first), Box::new(second)),
+            })
         }
         Rule::lambda => {
             let mut inner_rule = parsed.into_inner();
             let params = read_params(inner_rule.next().unwrap())?;
             let body = read_expr(inner_rule.next().unwrap())?;
 
-            Ok(Expr::Lambda(params, Box::new(body)))
+            Ok(Expr {
+                kind: ExprKind::Lambda(params, Box::new(body)),
+            })
         }
         Rule::arrow => {
             let mut exprs = read_exprs(parsed.into_inner())?;
             let ret_typ = exprs.pop().unwrap();
-            Ok(Expr::TArr(exprs, Box::new(ret_typ)))
+            Ok(Expr {
+                kind: ExprKind::TArr(exprs, Box::new(ret_typ)),
+            })
         }
         Rule::sexpr => {
             let mut inner_rule = parsed.into_inner();
             let first = read_expr(inner_rule.next().unwrap())?;
-            Ok(Expr::App(Box::new(first), read_exprs(inner_rule)?))
+            Ok(Expr {
+                kind: ExprKind::App(Box::new(first), read_exprs(inner_rule)?),
+            })
         }
         Rule::ident => {
             let ident = parsed.as_str().to_string();
             match ident.as_str() {
-                "Atom" => Ok(Expr::TAtom),
-                "Nat" => Ok(Expr::TNat),
-                "zero" => Ok(Expr::Zero),
-                _ => Ok(Expr::Var(ident)),
+                "Atom" => Ok(Expr {
+                    kind: ExprKind::TAtom,
+                }),
+                "Nat" => Ok(Expr {
+                    kind: ExprKind::TNat,
+                }),
+                "zero" => Ok(Expr {
+                    kind: ExprKind::Zero,
+                }),
+                _ => Ok(Expr {
+                    kind: ExprKind::Var(ident),
+                }),
             }
         }
-        Rule::car => Ok(Expr::Car(Box::new(read_unary(parsed)?))),
-        Rule::cdr => Ok(Expr::Cdr(Box::new(read_unary(parsed)?))),
-        Rule::add1 => Ok(Expr::Succ(Box::new(read_unary(parsed)?))),
-        Rule::nat_literal => Ok(Expr::Nat(parsed.as_str().parse::<BigUint>().unwrap())),
-        Rule::atom => Ok(Expr::Atom(parsed.as_str()[1..].to_string())),
+        Rule::car => Ok(Expr {
+            kind: ExprKind::Car(Box::new(read_unary(parsed)?)),
+        }),
+        Rule::cdr => Ok(Expr {
+            kind: ExprKind::Cdr(Box::new(read_unary(parsed)?)),
+        }),
+        Rule::add1 => Ok(Expr {
+            kind: ExprKind::Succ(Box::new(read_unary(parsed)?)),
+        }),
+        Rule::nat_literal => Ok(Expr {
+            kind: ExprKind::Nat(parsed.as_str().parse::<BigUint>().unwrap()),
+        }),
+        Rule::atom => Ok(Expr {
+            kind: ExprKind::Atom(parsed.as_str()[1..].to_string()),
+        }),
         _ => unreachable!(),
     }
 }

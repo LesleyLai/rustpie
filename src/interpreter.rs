@@ -1,4 +1,4 @@
-use crate::ast::{Expr, Toplevel};
+use crate::ast::{Expr, ExprKind, Toplevel};
 use im::{hashmap, HashMap};
 use num_bigint::ToBigUint;
 
@@ -12,13 +12,13 @@ const RESERVED_IDENTIFIERS: &[&str] = &[
 
 fn init_global_tenv() -> TypeEnv {
     hashmap! {
-        // "x".to_string() => Expr::TAtom
+        // "x".to_string() => ExprKind::TAtom
     }
 }
 
 fn init_global_env() -> Env {
     hashmap! {
-        // "x".to_string() => Expr::Atom("x".to_string())
+        // "x".to_string() => ExprKind::Atom("x".to_string())
     }
 }
 
@@ -143,129 +143,147 @@ impl std::fmt::Display for RuntimeError {
 }
 
 pub fn has_type(expr: &Expr, tenv: &TypeEnv) -> Result<Expr, TypeError> {
-    match expr {
-        Expr::Var(ident) => match tenv.get(ident) {
+    match &expr.kind {
+        ExprKind::Var(ident) => match tenv.get(ident) {
             Some(t) => Ok(t.clone()),
             _ => Err(TypeError::CannotResolveType(format!("{}", expr))),
         },
-        Expr::TAtom => unimplemented!(),
-        Expr::Atom(_) => Ok(Expr::TAtom),
-        Expr::App(_, _) => unimplemented!(),
-        Expr::TPair(_e1, _e2) => unimplemented!(),
-        Expr::Car(e) => match has_type(&e, tenv)? {
-            Expr::TPair(t1, _) => Ok(*t1),
+        ExprKind::TAtom => unimplemented!(),
+        ExprKind::Atom(_) => Ok(Expr {
+            kind: ExprKind::TAtom,
+        }),
+        ExprKind::App(_, _) => unimplemented!(),
+        ExprKind::TPair(_e1, _e2) => unimplemented!(),
+        ExprKind::Car(e) => match has_type(&e, tenv)?.kind {
+            ExprKind::TPair(t1, _) => Ok(*t1),
             t => Err(TypeError::SyntaxUnaryArgumentTypeMismatch(
                 "car".to_string(),
                 "Pair".to_string(),
                 format!("{}", t),
             )),
         },
-        Expr::Cdr(e) => match has_type(&e, tenv)? {
-            Expr::TPair(_, t2) => Ok(*t2),
+        ExprKind::Cdr(e) => match has_type(&e, tenv)?.kind {
+            ExprKind::TPair(_, t2) => Ok(*t2),
             t => Err(TypeError::SyntaxUnaryArgumentTypeMismatch(
                 "cdr".to_string(),
                 "Pair".to_string(),
                 format!("{}", t),
             )),
         },
-        Expr::Cons(e1, e2) => {
-            let t1 = has_type(e1, tenv)?;
-            let t2 = has_type(e2, tenv)?;
-            Ok(Expr::TPair(Box::new(t1), Box::new(t2)))
+        ExprKind::Cons(e1, e2) => {
+            let t1 = has_type(&e1, tenv)?;
+            let t2 = has_type(&e2, tenv)?;
+            Ok(Expr {
+                kind: ExprKind::TPair(Box::new(t1), Box::new(t2)),
+            })
         }
-        Expr::TNat => unimplemented!(),
-        Expr::Zero => Ok(Expr::TNat),
-        Expr::Succ(e) => match has_type(e, tenv)? {
-            Expr::TNat => Ok(Expr::TNat),
+        ExprKind::TNat => unimplemented!(),
+        ExprKind::Zero => Ok(Expr {
+            kind: ExprKind::TNat,
+        }),
+        ExprKind::Succ(e) => match has_type(&e, tenv)?.kind {
+            ExprKind::TNat => Ok(Expr {
+                kind: ExprKind::TNat,
+            }),
             t => Err(TypeError::SyntaxUnaryArgumentTypeMismatch(
                 "add1".to_string(),
                 "Nat".to_string(),
                 format!("{}", t),
             )),
         },
-        Expr::Nat(_) => Ok(Expr::TNat),
-        Expr::Lambda(_, _) => unimplemented!(),
-        Expr::TArr(_, _) => unimplemented!(),
+        ExprKind::Nat(_) => Ok(Expr {
+            kind: ExprKind::TNat,
+        }),
+        ExprKind::Lambda(_, _) => unimplemented!(),
+        ExprKind::TArr(_, _) => unimplemented!(),
     }
 }
 
 pub fn eval(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, RuntimeError> {
-    match expr {
-        Expr::Var(ident) => match env.get(ident) {
+    match &expr.kind {
+        ExprKind::Var(ident) => match env.get(ident) {
             Some(e) => Ok(e.clone()),
             None => Err(RuntimeError::VarClaimedNotDefined(
                 ident.clone(),
                 tenv.get(ident).unwrap().clone(),
             )),
         },
-        Expr::App(_, _) => unimplemented!(),
-        Expr::Car(e) => match eval(e, &tenv, env)? {
-            Expr::Cons(e1, _) => eval(&e1, tenv, env),
+        ExprKind::App(_, _) => unimplemented!(),
+        ExprKind::Car(e) => match eval(&e, &tenv, env)?.kind {
+            ExprKind::Cons(e1, _) => eval(&e1, tenv, env),
             _ => unreachable!(),
         },
-        Expr::Cdr(e) => match &**e {
-            Expr::Cons(_, e2) => eval(&e2, tenv, env),
+        ExprKind::Cdr(e) => match &e.kind {
+            ExprKind::Cons(_, e2) => eval(&e2, tenv, env),
             _ => unreachable!(),
         },
-        nat @ Expr::Nat(_) => Ok(nat.clone()),
+        nat @ ExprKind::Nat(_) => Ok(Expr { kind: nat.clone() }),
         // Eval for constructors does nothing interesting
-        Expr::TAtom
-        | Expr::Atom(_)
-        | Expr::TPair(_, _)
-        | Expr::Cons(_, _)
-        | Expr::TNat
-        | Expr::Zero
-        | Expr::Succ(_)
-        | Expr::TArr(_, _) => Ok(expr.clone()),
-        Expr::Lambda(_, _) => unimplemented!(),
+        ExprKind::TAtom
+        | ExprKind::Atom(_)
+        | ExprKind::TPair(_, _)
+        | ExprKind::Cons(_, _)
+        | ExprKind::TNat
+        | ExprKind::Zero
+        | ExprKind::Succ(_)
+        | ExprKind::TArr(_, _)
+        | ExprKind::Lambda(_, _) => Ok(expr.clone()),
     }
 }
 
 // Similar to eval, except it will eagerly evaluate arguments of constructors
 #[allow(dead_code)]
 pub fn to_normal_form(expr: &Expr, tenv: &TypeEnv, env: &Env) -> Result<Expr, String> {
-    match expr {
-        Expr::Var(ident) => Ok(env.get(ident).unwrap().clone()),
-        Expr::TAtom | Expr::Atom(_) => Ok(expr.clone()),
-        Expr::App(_, _) => unimplemented!(),
-        Expr::TPair(e1, e2) => {
-            let new_e1 = to_normal_form(e1, tenv, env)?;
-            let new_e2 = to_normal_form(e2, tenv, env)?;
-            Ok(Expr::TPair(Box::new(new_e1), Box::new(new_e2)))
+    match &expr.kind {
+        ExprKind::Var(ident) => Ok(env.get(ident).unwrap().clone()),
+        ExprKind::TAtom | ExprKind::Atom(_) => Ok(expr.clone()),
+        ExprKind::App(_, _) => unimplemented!(),
+        ExprKind::TPair(e1, e2) => {
+            let new_e1 = to_normal_form(&e1, tenv, env)?;
+            let new_e2 = to_normal_form(&e2, tenv, env)?;
+            Ok(Expr {
+                kind: ExprKind::TPair(Box::new(new_e1), Box::new(new_e2)),
+            })
         }
-        Expr::Car(e) => match &**e {
-            Expr::Cons(e1, _) => to_normal_form(&e1, tenv, env),
+        ExprKind::Car(e) => match &e.kind {
+            ExprKind::Cons(e1, _) => to_normal_form(&e1, tenv, env),
             _ => unreachable!(),
         },
-        Expr::Cdr(e) => match &**e {
-            Expr::Cons(_, e2) => to_normal_form(&e2, tenv, env),
+        ExprKind::Cdr(e) => match &e.kind {
+            ExprKind::Cons(_, e2) => to_normal_form(&e2, tenv, env),
             _ => unreachable!(),
         },
-        Expr::Cons(e1, e2) => {
-            let t1 = to_normal_form(e1, tenv, env)?;
-            let t2 = to_normal_form(e2, tenv, env)?;
-            Ok(Expr::Cons(Box::new(t1), Box::new(t2)))
+        ExprKind::Cons(e1, e2) => {
+            let t1 = to_normal_form(&e1, tenv, env)?;
+            let t2 = to_normal_form(&e2, tenv, env)?;
+            Ok(Expr {
+                kind: ExprKind::Cons(Box::new(t1), Box::new(t2)),
+            })
         }
-        Expr::TNat => unimplemented!(),
-        Expr::Zero => Ok(Expr::Nat(0.to_biguint().unwrap())),
-        Expr::Succ(e) => {
-            let v = to_normal_form(e, tenv, env)?;
-            match v {
-                Expr::Nat(n) => Ok(Expr::Nat(n + 1u32)),
+        ExprKind::TNat => unimplemented!(),
+        ExprKind::Zero => Ok(Expr {
+            kind: ExprKind::Nat(0.to_biguint().unwrap()),
+        }),
+        ExprKind::Succ(e) => {
+            let v = to_normal_form(&e, tenv, env)?;
+            match v.kind {
+                ExprKind::Nat(n) => Ok(Expr {
+                    kind: ExprKind::Nat(n + 1u32),
+                }),
                 _ => unreachable!(),
             }
         }
-        nat @ Expr::Nat(_) => Ok(nat.clone()),
-        Expr::Lambda(_, _) => unimplemented!(),
-        Expr::TArr(_, _) => unimplemented!(),
+        nat @ ExprKind::Nat(_) => Ok(Expr { kind: nat.clone() }),
+        ExprKind::Lambda(_, _) => unimplemented!(),
+        ExprKind::TArr(_, _) => unimplemented!(),
     }
 }
 
 pub fn is_type(expr: &Expr) -> bool {
-    match expr {
-        Expr::Var(_) => false,
-        Expr::TAtom | Expr::TNat | Expr::TPair(_, _) | Expr::TArr(_, _) => true,
-        Expr::App(_, _) => unimplemented!(),
+    match expr.kind {
+        ExprKind::Var(_) => false,
+        ExprKind::TAtom | ExprKind::TNat | ExprKind::TPair(_, _) | ExprKind::TArr(_, _) => true,
+        ExprKind::App(_, _) => unimplemented!(),
         _ => false,
     }
 }

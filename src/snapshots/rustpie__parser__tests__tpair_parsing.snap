@@ -5,10 +5,16 @@ expression: "parse(\"(Pair Atom Atom)\")"
 Ok(
     [
         Expr(
-            TPair(
-                TAtom,
-                TAtom,
-            ),
+            Expr {
+                kind: TPair(
+                    Expr {
+                        kind: TAtom,
+                    },
+                    Expr {
+                        kind: TAtom,
+                    },
+                ),
+            },
         ),
     ],
 )

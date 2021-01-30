@@ -5,14 +5,20 @@ expression: "parse(\"(cons 'x 'x)\")"
 Ok(
     [
         Expr(
-            Cons(
-                Atom(
-                    "x",
+            Expr {
+                kind: Cons(
+                    Expr {
+                        kind: Atom(
+                            "x",
+                        ),
+                    },
+                    Expr {
+                        kind: Atom(
+                            "x",
+                        ),
+                    },
                 ),
-                Atom(
-                    "x",
-                ),
-            ),
+            },
         ),
     ],
 )

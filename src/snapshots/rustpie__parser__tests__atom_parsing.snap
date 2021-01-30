@@ -5,9 +5,11 @@ expression: "parse(\"'x\")"
 Ok(
     [
         Expr(
-            Atom(
-                "x",
-            ),
+            Expr {
+                kind: Atom(
+                    "x",
+                ),
+            },
         ),
     ],
 )

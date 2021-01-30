@@ -5,13 +5,15 @@ expression: "parse(\"1\")"
 Ok(
     [
         Expr(
-            Nat(
-                BigUint {
-                    data: [
-                        1,
-                    ],
-                },
-            ),
+            Expr {
+                kind: Nat(
+                    BigUint {
+                        data: [
+                            1,
+                        ],
+                    },
+                ),
+            },
         ),
     ],
 )

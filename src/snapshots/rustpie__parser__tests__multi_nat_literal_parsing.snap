@@ -5,22 +5,28 @@ expression: "parse(\"(cons 42 42)\")"
 Ok(
     [
         Expr(
-            Cons(
-                Nat(
-                    BigUint {
-                        data: [
-                            42,
-                        ],
+            Expr {
+                kind: Cons(
+                    Expr {
+                        kind: Nat(
+                            BigUint {
+                                data: [
+                                    42,
+                                ],
+                            },
+                        ),
+                    },
+                    Expr {
+                        kind: Nat(
+                            BigUint {
+                                data: [
+                                    42,
+                                ],
+                            },
+                        ),
                     },
                 ),
-                Nat(
-                    BigUint {
-                        data: [
-                            42,
-                        ],
-                    },
-                ),
-            ),
+            },
         ),
     ],
 )

@@ -5,15 +5,25 @@ expression: "parse(\"(-> Nat (Pair Nat Nat))\")"
 Ok(
     [
         Expr(
-            TArr(
-                [
-                    TNat,
-                ],
-                TPair(
-                    TNat,
-                    TNat,
+            Expr {
+                kind: TArr(
+                    [
+                        Expr {
+                            kind: TNat,
+                        },
+                    ],
+                    Expr {
+                        kind: TPair(
+                            Expr {
+                                kind: TNat,
+                            },
+                            Expr {
+                                kind: TNat,
+                            },
+                        ),
+                    },
                 ),
-            ),
+            },
         ),
     ],
 )
